@@ -1,6 +1,7 @@
 package eu.europeana.api.translation.definitions.model;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -27,6 +28,7 @@ public class TranslationRequest {
     super();
   }
 
+  @JsonGetter(TranslationAppConstants.SOURCE_LANG)
   public String getSource() {
     return source;
   }
@@ -36,6 +38,7 @@ public class TranslationRequest {
     this.source = source;
   }
 
+  @JsonGetter(TranslationAppConstants.TARGET_LANG)
   public String getTarget() {
     return target;
   }
@@ -45,6 +48,7 @@ public class TranslationRequest {
     this.target = target;
   }
 
+  @JsonGetter(TranslationAppConstants.SERVICE)
   public String getService() {
     return service;
   }
@@ -54,6 +58,7 @@ public class TranslationRequest {
     this.service = service;
   }
 
+  @JsonGetter(TranslationAppConstants.FALLBACK)
   public String getFallback() {
     return fallback;
   }
@@ -63,6 +68,7 @@ public class TranslationRequest {
     this.fallback = fallback;
   }
 
+  @JsonGetter(TranslationAppConstants.TEXT)
   public List<String> getText() {
     return text;
   }
@@ -80,6 +86,7 @@ public class TranslationRequest {
     return caching;
   }
   
+  @JsonGetter(TranslationAppConstants.CACHING)
   public Boolean getCaching() {
     return caching;
   }

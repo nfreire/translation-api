@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.europeana.api.commons.web.http.HttpHeaders;
 import eu.europeana.api.commons.web.model.vocabulary.Operations;
 import eu.europeana.api.translation.definitions.language.LanguagePair;
-import eu.europeana.api.translation.definitions.vocabulary.TranslationAppConstants;
 import eu.europeana.api.translation.definitions.model.TranslationRequest;
 import eu.europeana.api.translation.definitions.model.TranslationResponse;
+import eu.europeana.api.translation.definitions.vocabulary.TranslationAppConstants;
 import eu.europeana.api.translation.web.exception.ParamValidationException;
 import eu.europeana.api.translation.web.service.TranslationWebService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +39,10 @@ public class TranslationController extends BaseRest {
     verifyWriteAccess(Operations.CREATE, request);
 
     validateRequest(translRequest);
+    
+    if(logger.isTraceEnabled()) {
+      logger.trace("Translation request: " + jsonLdSerializer.serializeObject(translRequest));
+    }
         
     TranslationResponse result = translationService.translate(translRequest);
 
