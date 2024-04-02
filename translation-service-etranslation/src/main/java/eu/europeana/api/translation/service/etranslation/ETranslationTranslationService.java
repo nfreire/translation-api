@@ -30,7 +30,7 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import eu.europeana.api.translation.definitions.model.TranslationObj;
 import eu.europeana.api.translation.service.AbstractTranslationService;
 import eu.europeana.api.translation.service.exception.TranslationException;
-import eu.europeana.api.translation.service.util.UtilityMethods;
+import eu.europeana.api.translation.service.util.TranslationUtils;
 
 public class ETranslationTranslationService extends AbstractTranslationService {
   
@@ -78,8 +78,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
      * The publisher will publish to the same channel using the external reference from the eTransl callback.
      */
     //create external reference for eTransl service
-    String eTranslExtRef = UtilityMethods.generateRedisKey(
-        eTranslJointStr, translationObjs.get(0).getSourceLang(), translationObjs.get(0).getTargetLang(), true);
+    String eTranslExtRef = TranslationUtils.generateRedisKey(
+        eTranslJointStr, translationObjs.get(0).getSourceLang(), translationObjs.get(0).getTargetLang(), "et:");
 
     //create and send the eTransl request
     //baseUrl is different for the integration tests, where the eTranslation service will not be called

@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import eu.europeana.api.translation.definitions.model.TranslationObj;
-import eu.europeana.api.translation.service.util.UtilityMethods;
+import eu.europeana.api.translation.service.util.TranslationUtils;
 import eu.europeana.api.translation.web.model.CachedTranslation;
 import io.micrometer.core.instrument.util.StringUtils;
 
@@ -43,8 +43,8 @@ public class RedisCacheService {
     for (TranslationObj translationObj : translationObjects) {
       if (translationObj.getTranslation() == null && isCacheable(translationObj) && !translationObj.isTranslated()) {
         // generate redis key and add translation to the list of cacheable objects
-        redisKey = UtilityMethods.generateRedisKey(translationObj.getText(), translationObj.getSourceLang(),
-            translationObj.getTargetLang(), false);
+        redisKey = TranslationUtils.generateRedisKey(translationObj.getText(), translationObj.getSourceLang(),
+            translationObj.getTargetLang(), null);
         cacheKeys.add(redisKey);
         cacheableTranslations.add(translationObj);
       }
@@ -133,8 +133,8 @@ public class RedisCacheService {
     for (TranslationObj translObj : translationStrings) {
       if (isCacheable(translObj) && hasTranslation(translObj) && !translObj.isRetrievedFromCache()) {
         // String key = translObj.getCacheKey();
-        key = UtilityMethods.generateRedisKey(translObj.getText(), translObj.getSourceLang(),
-            translObj.getTargetLang(), false);
+        key = TranslationUtils.generateRedisKey(translObj.getText(), translObj.getSourceLang(),
+            translObj.getTargetLang(), null);
         translObj.setCacheKey(key);
         valueMap.put(key, toCachedTranslation(translObj));
       }

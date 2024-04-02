@@ -219,12 +219,12 @@ public class TranslationApiAutoconfig implements ApplicationListener<Application
   public ETranslationTranslationService getETranslationService(
       @Qualifier(BeanNames.BEAN_REDIS_MESSAGE_LISTENER_CONTAINER) RedisMessageListenerContainer redisMessageListenerContainer) throws Exception {
     return new ETranslationTranslationService(
-        translationConfig.geteTranslationBaseUrl(), 
-        translationConfig.geteTranslationDomain(), 
-        translationConfig.geteTranslationCallback(), 
-        translationConfig.geteTranslationMaxWaitMillisec(), 
-        translationConfig.geteTranslationUsername(),
-        translationConfig.geteTranslationPassword(),
+        translationConfig.getEtranslationBaseUrl(), 
+        translationConfig.getEtranslationDomain(), 
+        translationConfig.getEtranslationCallback(), 
+        translationConfig.getEtranslationMaxWaitMillisec(), 
+        translationConfig.getEtranslationUsername(),
+        translationConfig.getEtranslationPassword(),
         redisMessageListenerContainer);
   }
 

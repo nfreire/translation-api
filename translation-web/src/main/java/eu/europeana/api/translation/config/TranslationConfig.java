@@ -55,23 +55,23 @@ public class TranslationConfig{
   @Value("${truststore.password:}")
   private String truststorePass;
 
-  @Value("${translation.eTranslation.username:}")
-  private String eTranslationUsername;
+  @Value("${translation.eTranslation.username:''}")
+  private String etranslationUsername;
 
-  @Value("${translation.eTranslation.password:}")
-  private String eTranslationPassword;
+  @Value("${translation.eTranslation.password:''}")
+  private String etranslationPassword;
 
-  @Value("${translation.eTranslation.domain:}")
-  private String eTranslationDomain;
+  @Value("${translation.eTranslation.domain:''}")
+  private String etranslationDomain;
 
-  @Value("${translation.eTranslation.callback:}")
-  private String eTranslationCallback;
+  @Value("${translation.eTranslation.callback:''}")
+  private String etranslationCallback;
 
   @Value("${translation.eTranslation.maxWaitMillisec:30000}")
-  private int eTranslationMaxWaitMillisec;
+  private int etranslationMaxWaitMillisec;
 
-  @Value("${translation.eTranslation.baseUrl:}")
-  private String eTranslationBaseUrl;
+  @Value("${translation.eTranslation.baseUrl:''}")
+  private String etranslationBaseUrl;
 
   @Value("${translation.dummy.services:false}")
   private boolean useDummyServices;
@@ -157,31 +157,29 @@ public class TranslationConfig{
   public String getConfigFolder() {
     return CONFIG_FOLDER;
   }
-  
-  public String geteTranslationUsername() {
-    return eTranslationUsername;
+
+  public String getEtranslationUsername() {
+    return etranslationUsername;
   }
 
-  public String geteTranslationPassword() {
-    return eTranslationPassword;
+  public String getEtranslationPassword() {
+    return etranslationPassword;
   }
 
-  public String geteTranslationDomain() {
-    return eTranslationDomain;
+  public String getEtranslationDomain() {
+    return etranslationDomain;
   }
 
-  public String geteTranslationCallback() {
-    return eTranslationCallback;
+  public String getEtranslationCallback() {
+    return etranslationCallback;
   }
 
-  public int geteTranslationMaxWaitMillisec() {
-    return eTranslationMaxWaitMillisec;
+  public int getEtranslationMaxWaitMillisec() {
+    return etranslationMaxWaitMillisec;
   }
 
-  public String geteTranslationBaseUrl() {
-    return eTranslationBaseUrl;
+  public String getEtranslationBaseUrl() {
+    return etranslationBaseUrl;
   }
-
-
   
 }
