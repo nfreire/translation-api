@@ -55,22 +55,22 @@ public class TranslationConfig{
   @Value("${truststore.password:}")
   private String truststorePass;
 
-  @Value("${translation.eTranslation.username:''}")
+  @Value("${translation.eTranslation.username:#{null}}")
   private String etranslationUsername;
 
-  @Value("${translation.eTranslation.password:''}")
+  @Value("${translation.eTranslation.password:#{null}}")
   private String etranslationPassword;
 
-  @Value("${translation.eTranslation.domain:''}")
+  @Value("${translation.eTranslation.domain:#{null}}")
   private String etranslationDomain;
 
-  @Value("${translation.eTranslation.callback:''}")
+  @Value("${translation.eTranslation.callback:#{null}}")
   private String etranslationCallback;
 
   @Value("${translation.eTranslation.maxWaitMillisec:30000}")
   private int etranslationMaxWaitMillisec;
 
-  @Value("${translation.eTranslation.baseUrl:''}")
+  @Value("${translation.eTranslation.baseUrl:#{null}}")
   private String etranslationBaseUrl;
 
   @Value("${translation.dummy.services:false}")
