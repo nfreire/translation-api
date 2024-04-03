@@ -41,7 +41,7 @@ public class TranslationController extends BaseRest {
     validateRequest(translRequest);
     
     if(logger.isTraceEnabled()) {
-      logger.trace("Translation request: " + jsonLdSerializer.serializeObject(translRequest));
+      logger.trace("Translation request: {}", jsonLdSerializer.serializeObject(translRequest));
     }
         
     TranslationResponse result = translationService.translate(translRequest);
