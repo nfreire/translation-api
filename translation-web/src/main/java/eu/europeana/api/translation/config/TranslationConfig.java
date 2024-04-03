@@ -51,10 +51,28 @@ public class TranslationConfig{
 
   @Value("${truststore.path:}")
   private String truststorePath;
-
+  
   @Value("${truststore.password:}")
   private String truststorePass;
-  
+
+  @Value("${translation.eTranslation.username:#{null}}")
+  private String etranslationUsername;
+
+  @Value("${translation.eTranslation.password:#{null}}")
+  private String etranslationPassword;
+
+  @Value("${translation.eTranslation.domain:#{null}}")
+  private String etranslationDomain;
+
+  @Value("${translation.eTranslation.callback:#{null}}")
+  private String etranslationCallback;
+
+  @Value("${translation.eTranslation.maxWaitMillisec:30000}")
+  private int etranslationMaxWaitMillisec;
+
+  @Value("${translation.eTranslation.baseUrl:#{null}}")
+  private String etranslationBaseUrl;
+
   @Value("${translation.dummy.services:false}")
   private boolean useDummyServices;
   
@@ -138,6 +156,30 @@ public class TranslationConfig{
 
   public String getConfigFolder() {
     return CONFIG_FOLDER;
+  }
+
+  public String getEtranslationUsername() {
+    return etranslationUsername;
+  }
+
+  public String getEtranslationPassword() {
+    return etranslationPassword;
+  }
+
+  public String getEtranslationDomain() {
+    return etranslationDomain;
+  }
+
+  public String getEtranslationCallback() {
+    return etranslationCallback;
+  }
+
+  public int getEtranslationMaxWaitMillisec() {
+    return etranslationMaxWaitMillisec;
+  }
+
+  public String getEtranslationBaseUrl() {
+    return etranslationBaseUrl;
   }
   
 }
