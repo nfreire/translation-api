@@ -66,7 +66,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   
   private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl, 
       int maxWaitMillisec, String username, String password) throws TranslationException {
-    StringBuilder missingParams=new StringBuilder(100);
+    StringBuilder missingParams=new StringBuilder();
     if(StringUtils.isBlank(baseUrl)) {
       missingParams.append("baseUrl");
     }
@@ -186,7 +186,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
    * @throws TranslationException 
    */
   private String generateJointHtmlForTranslation(List<TranslationObj> translationObjs) throws TranslationException {
-    StringBuilder translJointString=new StringBuilder(100);
+    StringBuilder translJointString=new StringBuilder();
     translJointString.append("<!DOCTYPE html>\n<htlm>\n<body>\n");
     for(TranslationObj translObj : translationObjs) {
       translJointString.append("<p>");
