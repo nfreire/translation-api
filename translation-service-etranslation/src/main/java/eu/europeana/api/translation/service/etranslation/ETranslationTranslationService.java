@@ -242,6 +242,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     request.setEntity(params);
     
     CloseableHttpResponse response = httpClient.execute(request);
+//    System.out.print("eTransl request sent at: " + java.time.LocalTime.now());
     
     StatusLine respStatusLine = response.getStatusLine();
     if(! HttpStatus.valueOf(respStatusLine.getStatusCode()).is2xxSuccessful()) {
