@@ -18,6 +18,12 @@
 		  <groupId>org.springframework.boot</groupId>
 		  <artifactId>spring-boot-starter-data-redis</artifactId>
       </dependency>		
+      <!-- https://mvnrepository.com/artifact/org.springframework/spring-web -->
+	  <dependency>
+	      <groupId>org.springframework</groupId>
+	      <artifactId>spring-web</artifactId>
+	  </dependency>
+      
 	  <dependency>
 		  <groupId>eu.europeana.api</groupId>
 		  <artifactId>translation-service-common</artifactId>
