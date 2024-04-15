@@ -66,7 +66,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   
   private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl, 
       int maxWaitMillisec, String username, String password) throws TranslationException {
-    StringBuilder missingParams=new StringBuilder();
+    StringBuilder missingParams=new StringBuilder(TranslationUtils.STRING_BUILDER_INIT_SIZE);
     if(StringUtils.isBlank(baseUrl)) {
       missingParams.append("baseUrl");
     }
@@ -186,7 +186,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
    * @throws TranslationException 
    */
   private String generateJointHtmlForTranslation(List<TranslationObj> translationObjs) throws TranslationException {
-    StringBuilder translJointString=new StringBuilder();
+    StringBuilder translJointString=new StringBuilder(TranslationUtils.STRING_BUILDER_INIT_SIZE);
     translJointString.append("<!DOCTYPE html>\n<htlm>\n<body>\n");
     for(TranslationObj translObj : translationObjs) {
       translJointString.append("<p>");
@@ -242,13 +242,14 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     request.setEntity(params);
     
     CloseableHttpResponse response = httpClient.execute(request);
+    
     StatusLine respStatusLine = response.getStatusLine();
-    String respBody=EntityUtils.toString(response.getEntity(), "UTF-8");
-
     if(! HttpStatus.valueOf(respStatusLine.getStatusCode()).is2xxSuccessful()) {
       throw new TranslationException("Invalid eTranslation http request (not successfull status code in the "
           + "immediate response), status code: " + respStatusLine.getStatusCode() + ", reason phrase: " + respStatusLine.getReasonPhrase());
     }  
+    
+    String respBody=EntityUtils.toString(response.getEntity(), "UTF-8");
     if(Integer.parseInt(respBody) < 0) {
       throw new TranslationException("Invalid eTranslation http request with the response code (<0): " + respBody);
     }

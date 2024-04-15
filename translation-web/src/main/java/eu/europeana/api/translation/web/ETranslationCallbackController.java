@@ -32,7 +32,7 @@ public class ETranslationCallbackController {
       @RequestParam(value = "external-reference", required = true) String externalReference,
       @RequestBody String body) {
     if(LOGGER.isDebugEnabled()) {
-      LOGGER.debug("eTranslation callback on translation api has been received with the external-reference: {}", externalReference);
+      LOGGER.debug("eTranslation callback on translation api has been received.");
     }
     if(externalReference!=null && body!=null) {
       redisTemplate.convertAndSend(externalReference, body);
