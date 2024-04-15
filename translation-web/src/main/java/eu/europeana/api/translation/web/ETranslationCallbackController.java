@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import eu.europeana.api.commons.definitions.utils.LoggingUtils;
 import eu.europeana.api.translation.web.model.CachedTranslation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
@@ -32,7 +33,8 @@ public class ETranslationCallbackController {
       @RequestParam(value = "external-reference", required = true) String externalReference,
       @RequestBody String body) {
     if(LOGGER.isDebugEnabled()) {
-      LOGGER.debug("eTranslation callback on translation api has been received.");
+      LOGGER.debug("eTranslation callback on translation api has been received with the request-id: {}, and the"
+          + " external-reference: {}", LoggingUtils.sanitizeUserInput(requestId), LoggingUtils.sanitizeUserInput(externalReference));
     }
     if(externalReference!=null && body!=null) {
       redisTemplate.convertAndSend(externalReference, body);
