@@ -2,9 +2,11 @@ package eu.europeana.api.translation.service.etranslation;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -24,7 +26,6 @@ import org.codehaus.jettison.json.JSONObject;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import org.springframework.http.HttpStatus;
 import eu.europeana.api.translation.definitions.model.TranslationObj;
 import eu.europeana.api.translation.service.AbstractTranslationService;
 import eu.europeana.api.translation.service.exception.TranslationException;
@@ -64,24 +65,24 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   
   private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl, 
       int maxWaitMillisec, String username, String password) throws TranslationException {
-    StringBuilder missingParams=new StringBuilder(TranslationUtils.STRING_BUILDER_INIT_SIZE);
+    List<String> missingParams= new ArrayList<>(6);
     if(StringUtils.isBlank(baseUrl)) {
-      missingParams.append("baseUrl");
+      missingParams.add("baseUrl");
     }
     if(StringUtils.isBlank(domain)) {
-      missingParams.append("domain");
+      missingParams.add("domain");
     }
     if(StringUtils.isBlank(callbackUrl)) {
-      missingParams.append("callbackUrl");
+      missingParams.add("callbackUrl");
     }
     if(maxWaitMillisec<=0) {
-      missingParams.append("maxWaitMillisec (must be >0)");
+      missingParams.add("maxWaitMillisec (must be >0)");
     }
     if(StringUtils.isBlank(username)) {
-      missingParams.append("username");
+      missingParams.add("username");
     }
     if(StringUtils.isBlank(password)) {
-      missingParams.append("password");
+      missingParams.add("password");
     }
     
     if(! missingParams.isEmpty()) {
@@ -279,7 +280,6 @@ public class ETranslationTranslationService extends AbstractTranslationService {
         .put("targetLanguages", new JSONArray().put(0, targetLang.toUpperCase(Locale.ENGLISH)))
         .put("domain", domain)
         .put("destinations",
-//            new JSONObject().put("emailDestinations", new JSONArray().put(0, "e-mail")))
             new JSONObject().put("httpDestinations", new JSONArray().put(0, callbackUrl)))
 //        .put("textToTranslate", text);
         .put("documentToTranslateBase64",
@@ -288,8 +288,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     return jsonBody.toString();
   }
   */
-  
-  private void createHttpRequest(String content) throws TranslationException, IOException {
+
+  private long createHttpRequest(String content) throws TranslationException, IOException {
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
     credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(credentialUsername, credentialPwd));
     CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCredentialsProvider(credsProvider).build();
@@ -299,18 +299,29 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     request.setEntity(params);
     
     CloseableHttpResponse response = httpClient.execute(request);
-//    System.out.print("eTransl request sent at: " + java.time.LocalTime.now());
     
     StatusLine respStatusLine = response.getStatusLine();
-    if(! HttpStatus.valueOf(respStatusLine.getStatusCode()).is2xxSuccessful()) {
-      throw new TranslationException("Invalid eTranslation http request (not successfull status code in the "
-          + "immediate response), status code: " + respStatusLine.getStatusCode() + ", reason phrase: " + respStatusLine.getReasonPhrase());
+    if(HttpStatus.SC_OK  != respStatusLine.getStatusCode()) {
+      throw new TranslationException("The translation request could not be successfully registered. ETranslation response: " + 
+       respStatusLine.getStatusCode() + ", reason phrase: " + respStatusLine.getReasonPhrase());
     }  
     
     String respBody=EntityUtils.toString(response.getEntity(), "UTF-8");
-    if(Integer.parseInt(respBody) < 0) {
-      throw new TranslationException("Invalid eTranslation http request with the response code (<0): " + respBody);
+    long requestNumber;
+    try{
+      requestNumber = Long.parseLong(respBody);
+      if(requestNumber < 0) {
+        throw wrapETranslationErrorResponse(respBody);
+      }
+    } catch (NumberFormatException e) {
+      throw wrapETranslationErrorResponse(respBody);
     }
+    
+    return requestNumber;
+  }
+
+  TranslationException wrapETranslationErrorResponse(String respBody) {
+    return new TranslationException("The translation request could not be successfully registered. ETranslation error response: " + respBody);
   }
   
   @Override
