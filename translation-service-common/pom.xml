@@ -17,6 +17,11 @@
   
   	<dependencies>
 		<dependency>
+            <groupId>eu.europeana.api.commons</groupId>
+            <artifactId>commons-definitions</artifactId>
+            <version>${api-commons.version}</version>
+        </dependency> 
+		<dependency>
 			<groupId>eu.europeana.api</groupId>
 			<artifactId>translation-definitions</artifactId>
 			<version>0.1.2-SNAPSHOT</version>

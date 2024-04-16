@@ -31,7 +31,6 @@ import eu.europeana.api.translation.config.BeanNames;
 import eu.europeana.api.translation.config.TranslationConfig;
 import eu.europeana.api.translation.definitions.model.TranslationObj;
 import eu.europeana.api.translation.definitions.vocabulary.TranslationAppConstants;
-import eu.europeana.api.translation.service.etranslation.ETranslationTranslationService;
 import eu.europeana.api.translation.service.google.GoogleTranslationService;
 import eu.europeana.api.translation.service.google.GoogleTranslationServiceClientWrapper;
 import eu.europeana.api.translation.tests.BaseTranslationTest;

@@ -3,13 +3,17 @@ package eu.europeana.api.translation.service.etranslation;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -49,9 +53,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   
   public ETranslationTranslationService(String baseUrl, String domain, String callbackUrl, int maxWaitMillisec, 
       String username, String password, RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
-    if(!baseUrlTests.equals(baseUrl) && (StringUtils.isBlank(baseUrl) || StringUtils.isBlank(domain) || StringUtils.isBlank(callbackUrl) ||
-        maxWaitMillisec<=0 || StringUtils.isBlank(username) || StringUtils.isBlank(password))) {
-      throw new TranslationException("Invalid eTranslation config parameters.");
+    if(!baseUrlTests.equals(baseUrl)) {
+      validateETranslConfigParams(baseUrl, domain, callbackUrl, maxWaitMillisec, username, password);
     }
     this.baseUrl = baseUrl;
     this.domain = domain;
@@ -60,6 +63,33 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     this.credentialUsername=username;
     this.credentialPwd=password;
     this.redisMessageListenerContainer=redisMessageListenerContainer;
+  }
+  
+  private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl, 
+      int maxWaitMillisec, String username, String password) throws TranslationException {
+    List<String> missingParams= new ArrayList<>(5);
+    if(StringUtils.isBlank(baseUrl)) {
+      missingParams.add("baseUrl");
+    }
+    if(StringUtils.isBlank(domain)) {
+      missingParams.add("domain");
+    }
+    if(StringUtils.isBlank(callbackUrl)) {
+      missingParams.add("callbackUrl");
+    }
+    if(maxWaitMillisec<=0) {
+      missingParams.add("maxWaitMillisec (must be >0)");
+    }
+    if(StringUtils.isBlank(username)) {
+      missingParams.add("username");
+    }
+    if(StringUtils.isBlank(password)) {
+      missingParams.add("password");
+    }
+    
+    if(! missingParams.isEmpty()) {
+      throw new TranslationException("Invalid eTranslation config parameters: " + missingParams.toString());
+    }
   }
 
   @Override
@@ -86,10 +116,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     if(! baseUrlTests.equals(baseUrl)) {
       try {
         String body = createTranslationBody(eTranslJointStr,translationObjs.get(0).getSourceLang(),translationObjs.get(0).getTargetLang(),eTranslExtRef);
-        String eTranslRespNumber = createHttpRequest(body);
-        if(Integer.parseInt(eTranslRespNumber) < 0) {
-          throw new TranslationException("Invalid eTranslation http request.");
-        }
+        createHttpRequest(body);
       } catch (JSONException | UnsupportedEncodingException e) {
         throw new TranslationException("Exception during the eTranslation http request body creation.", 0, e);
       } catch (IOException e) {
@@ -120,7 +147,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
           }
           else {
             if(LOGGER.isDebugEnabled()) {
-              LOGGER.debug("eTranslation response has not been received after waiting for: " + maxWaitMillisec + " milliseconds.");
+              LOGGER.debug("eTranslation response has not been received after waiting for: {} milliseconds.", maxWaitMillisec);
             }
             break;
           }
@@ -133,7 +160,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       String response=redisMessageListener.getMessage();
       //message received, populate the translations
       if(LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Received message from redis message listener is: " + response);
+        LOGGER.debug("Received message from redis message listener is: {}", response);
       }
       if(response!=null) {
         //first base64 decode
@@ -160,7 +187,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
    * @throws TranslationException 
    */
   private String generateJointHtmlForTranslation(List<TranslationObj> translationObjs) throws TranslationException {
-    StringBuilder translJointString=new StringBuilder(100);
+    StringBuilder translJointString=new StringBuilder(TranslationUtils.STRING_BUILDER_INIT_SIZE);
     translJointString.append("<!DOCTYPE html>\n<htlm>\n<body>\n");
     for(TranslationObj translObj : translationObjs) {
       translJointString.append("<p>");
@@ -197,7 +224,6 @@ public class ETranslationTranslationService extends AbstractTranslationService {
         .put("targetLanguages", new JSONArray().put(0, targetLang.toUpperCase(Locale.ENGLISH)))
         .put("domain", domain)
         .put("destinations",
-//            new JSONObject().put("emailDestinations", new JSONArray().put(0, "e-mail")))
             new JSONObject().put("httpDestinations", new JSONArray().put(0, callbackUrl)))
 //        .put("textToTranslate", text);
         .put("documentToTranslateBase64",
@@ -206,7 +232,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     return jsonBody.toString();
   }
 
-  private String createHttpRequest(String content) throws IOException {
+  private long createHttpRequest(String content) throws TranslationException, IOException {
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
     credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(credentialUsername, credentialPwd));
     CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCredentialsProvider(credsProvider).build();
@@ -214,7 +240,31 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     StringEntity params = new StringEntity(content, "UTF-8");
     request.addHeader("content-type", "application/json");
     request.setEntity(params);
-    return EntityUtils.toString(httpClient.execute(request).getEntity(), "UTF-8");
+    
+    CloseableHttpResponse response = httpClient.execute(request);
+    
+    StatusLine respStatusLine = response.getStatusLine();
+    if(HttpStatus.SC_OK  != respStatusLine.getStatusCode()) {
+      throw new TranslationException("The translation request could not be successfully registered. ETranslation response: " + 
+       respStatusLine.getStatusCode() + ", reason phrase: " + respStatusLine.getReasonPhrase());
+    }  
+    
+    String respBody=EntityUtils.toString(response.getEntity(), "UTF-8");
+    long requestNumber;
+    try{
+      requestNumber = Long.parseLong(respBody);
+      if(requestNumber < 0) {
+        throw wrapETranslationErrorResponse(respBody);
+      }
+    } catch (NumberFormatException e) {
+      throw wrapETranslationErrorResponse(respBody);
+    }
+    
+    return requestNumber;
+  }
+
+  TranslationException wrapETranslationErrorResponse(String respBody) {
+    return new TranslationException("The translation request could not be successfully registered. ETranslation error response: " + respBody);
   }
   
   @Override

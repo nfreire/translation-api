@@ -7,6 +7,8 @@ import com.google.common.primitives.Ints;
 
 public class TranslationUtils {
   
+  public static final int STRING_BUILDER_INIT_SIZE=100;
+ 
   private TranslationUtils() {
   }
 

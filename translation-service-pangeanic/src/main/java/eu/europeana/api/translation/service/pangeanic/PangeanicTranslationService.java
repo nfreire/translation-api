@@ -1,9 +1,14 @@
 package eu.europeana.api.translation.service.pangeanic;
 
 import java.io.IOException;
-import java.util.*;
-
-import eu.europeana.api.translation.definitions.model.LanguageDetectionObj;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
@@ -19,12 +24,13 @@ import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import eu.europeana.api.commons.definitions.utils.LoggingUtils;
+import eu.europeana.api.translation.definitions.model.LanguageDetectionObj;
 import eu.europeana.api.translation.definitions.model.TranslationObj;
 import eu.europeana.api.translation.service.AbstractTranslationService;
 import eu.europeana.api.translation.service.exception.LanguageDetectionException;
 import eu.europeana.api.translation.service.exception.TranslationException;
 import eu.europeana.api.translation.service.exception.TranslationServiceConfigurationException;
-import eu.europeana.api.translation.service.util.LoggingUtils;
 
 /**
  * Service to send data to translate to Pangeanic Translate API V2
