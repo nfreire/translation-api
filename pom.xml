@@ -65,7 +65,7 @@
 		<maven.compiler.release>${java.version}</maven.compiler.release>
 		
 		<!-- functional dependencies -->
-		<api-commons.version>0.3.24-SNAPSHOT</api-commons.version>
+		<api-commons.version>0.3.24</api-commons.version>
 		<apache.tika.version>2.9.1</apache.tika.version>
 		
 		<!-- spring boot -->
