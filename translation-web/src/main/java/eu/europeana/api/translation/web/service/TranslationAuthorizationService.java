@@ -51,7 +51,7 @@ public class TranslationAuthorizationService extends BaseAuthorizationService {
 
   @Override
   protected ApiWriteLockService getApiWriteLockService() {
-    // TODO Auto-generated method stub
+    //this API doesn't implement write lock
     return null;
   }
   
@@ -60,4 +60,8 @@ public class TranslationAuthorizationService extends BaseAuthorizationService {
     return false;
   }
 
+  @Override
+  protected  boolean mustVerifyResourceAccessForRead() {
+    return false;
+  }
 }
