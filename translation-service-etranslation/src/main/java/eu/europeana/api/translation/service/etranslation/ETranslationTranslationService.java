@@ -45,9 +45,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private final int maxWaitMillisec;
   private final RedisMessageListenerContainer redisMessageListenerContainer;
   public static final String baseUrlTests="base-url-for-testing";
-  public static final String markupDelimiter="\n<<<>>>\n";
-  public static final String markupDelimiterFromETransl="\n<<<>>> \n";
-  public static final String markupDelimiterWithoutNewline="<<<>>>";
+  public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
+  public static final String markupDelimiterWithoutNewline="deenPVsaOg";
   
   public ETranslationTranslationService(String baseUrl, String domain, String callbackUrl, int maxWaitMillisec, 
       String username, String password, RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {

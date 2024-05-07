@@ -164,10 +164,10 @@ public class TranslationRestIT extends BaseTranslationTest {
     Thread.sleep(1000);
     //trigger the eTranslation callback manually
     //computed in advance using the code in the eTransl service
-    String eTranslRef="et:deenPVsaOg";
+    String eTranslRef="et:deen0E3jxg";
     StringBuilder translatedText=new StringBuilder();
     translatedText.append("That is my dog.");
-    translatedText.append(ETranslationTranslationService.markupDelimiterFromETransl);
+    translatedText.append(ETranslationTranslationService.markupDelimiter);
     translatedText.append("That is my tree.");
     
     mockMvc
