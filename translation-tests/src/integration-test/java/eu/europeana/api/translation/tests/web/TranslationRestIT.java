@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.apache.commons.codec.binary.Base64;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.junit.jupiter.api.AfterAll;
@@ -31,6 +30,7 @@ import eu.europeana.api.translation.config.BeanNames;
 import eu.europeana.api.translation.config.TranslationConfig;
 import eu.europeana.api.translation.definitions.model.TranslationObj;
 import eu.europeana.api.translation.definitions.vocabulary.TranslationAppConstants;
+import eu.europeana.api.translation.service.etranslation.ETranslationTranslationService;
 import eu.europeana.api.translation.service.google.GoogleTranslationService;
 import eu.europeana.api.translation.service.google.GoogleTranslationServiceClientWrapper;
 import eu.europeana.api.translation.tests.BaseTranslationTest;
@@ -164,22 +164,17 @@ public class TranslationRestIT extends BaseTranslationTest {
     Thread.sleep(1000);
     //trigger the eTranslation callback manually
     //computed in advance using the code in the eTransl service
-    String eTranslRef="et:deen2On73g";
-    StringBuilder eTranslResp=new StringBuilder();
-    eTranslResp.append("<!DOCTYPE html>\n");
-    eTranslResp.append("<htlm>\n");
-    eTranslResp.append("<body>\n");
-    eTranslResp.append("<p>That is my dog.</p>\n");
-    eTranslResp.append("<p>That is my tree.</p>\n");
-    eTranslResp.append("</body>\n");
-    eTranslResp.append("</html>");    
+    String eTranslRef="et:deenPVsaOg";
+    StringBuilder translatedText=new StringBuilder();
+    translatedText.append("That is my dog.");
+    translatedText.append(ETranslationTranslationService.markupDelimiterFromETransl);
+    translatedText.append("That is my tree.");
     
-    String htmlContentBase64=Base64.encodeBase64String(eTranslResp.toString().getBytes(StandardCharsets.UTF_8));
     mockMvc
     .perform(
         post("/eTranslation/callback").characterEncoding(StandardCharsets.UTF_8)
         .param("external-reference", eTranslRef)
-        .content(htmlContentBase64))
+        .param("translated-text", translatedText.toString()))
     .andExpect(status().isOk());
 
     thread.join();

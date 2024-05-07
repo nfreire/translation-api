@@ -9,7 +9,7 @@
 
 	<groupId>eu.europeana.api</groupId>
 	<artifactId>translation-api</artifactId>
-	<version>0.1.2-SNAPSHOT</version>
+	<version>0.1.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Translation API</name>
@@ -63,10 +63,17 @@
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
 		<maven.compiler.release>${java.version}</maven.compiler.release>
-		<api-commons.version>0.3.24-SNAPSHOT</api-commons.version>
-		<jettison.version>1.3</jettison.version>
+		
+		<!-- functional dependencies -->
+		<api-commons.version>0.3.25-SNAPSHOT</api-commons.version>
+		<apache.tika.version>2.9.1</apache.tika.version>
+		
+		<!-- spring boot -->
 		<spring-boot.version>2.5.14</spring-boot.version>
 		<springdoc.version>1.6.14</springdoc.version>
+		<jettison.version>1.3</jettison.version>
+		
+		<!-- plugins -->
 		
 		<failsafe.version>3.0.0-M5</failsafe.version>
 		<git-commit-id.version>5.0.0</git-commit-id.version>
@@ -85,7 +92,7 @@
 		<sonar.cpd.exclusions>**/model/**/*</sonar.cpd.exclusions>
 		<aggregate.report.xml>translation-tests/target/site/jacoco-aggregate/jacoco.xml</aggregate.report.xml>
 		<sonar.coverage.jacoco.xmlReportPaths>${aggregate.report.xml}</sonar.coverage.jacoco.xmlReportPaths>
-		<apache.tika.version>2.9.1</apache.tika.version>
+		
 	</properties>
 
 	<dependencyManagement>

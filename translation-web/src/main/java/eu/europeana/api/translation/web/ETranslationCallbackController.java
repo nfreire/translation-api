@@ -31,13 +31,13 @@ public class ETranslationCallbackController {
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
       @RequestParam(value = "request-id", required = false) String requestId,
       @RequestParam(value = "external-reference", required = true) String externalReference,
-      @RequestBody String body) {
+      @RequestBody(required = false) String body) {
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("eTranslation callback on translation api has been received with the request-id: {}, and the"
           + " external-reference: {}", LoggingUtils.sanitizeUserInput(requestId), LoggingUtils.sanitizeUserInput(externalReference));
     }
-    if(externalReference!=null && body!=null) {
-      redisTemplate.convertAndSend(externalReference, body);
+    if(externalReference!=null && translatedTextSnippet!=null) {
+      redisTemplate.convertAndSend(externalReference, translatedTextSnippet);
     }
   } 
   
