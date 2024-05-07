@@ -31,7 +31,9 @@ import org.springframework.data.redis.connection.RedisConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import eu.europeana.api.commons.config.i18n.I18nService;
@@ -331,12 +333,24 @@ public class TranslationApiAutoconfig implements ApplicationListener<Application
     return new RedisCacheService(redisTemplate);
   }
 
+  @Bean(BeanNames.BEAN_REDIS_MESSAGE_LISTENER_ADAPTER)
+  MessageListenerAdapter listenerAdapter() {
+      return new MessageListenerAdapter();
+  }
+  
   @Bean(BeanNames.BEAN_REDIS_MESSAGE_LISTENER_CONTAINER)
   RedisMessageListenerContainer getRedisMessageListenerContainer(
-      @Qualifier(BeanNames.BEAN_REDIS_CONNECTION_FACTORY) LettuceConnectionFactory redisConnectionFactory) throws AppConfigurationException {
+      @Qualifier(BeanNames.BEAN_REDIS_CONNECTION_FACTORY) LettuceConnectionFactory redisConnectionFactory,
+      @Qualifier(BeanNames.BEAN_REDIS_MESSAGE_LISTENER_ADAPTER) MessageListenerAdapter messageListenerAdapter
+      ) throws AppConfigurationException {
     RedisMessageListenerContainer container  = new RedisMessageListenerContainer(); 
     redisConnectionFactory.afterPropertiesSet();
     container.setConnectionFactory(redisConnectionFactory); 
+    /*
+     * This is needed to avoid some cases redis closes all channels and does not allow any subscriptions (please see here: https://github.com/spring-projects/spring-data-redis/issues/2425).
+     * In this case we create one channel that is never un-subscribed from.
+     */
+    container.addMessageListener(messageListenerAdapter, new PatternTopic("Dummy"));
 //    container.addMessageListener(messageListener(), topic()); 
     return container; 
   }
