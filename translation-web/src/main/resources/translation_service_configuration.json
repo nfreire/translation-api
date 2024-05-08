@@ -25,7 +25,7 @@
                 "source": [ "sk", "hr", "pl", "ro", "it", "sv", "bg", "fr", "es"
                      , "cs", "de", "lv", "el", "fi", "nl", "hu", "da", "sl"
                      , "et", "pt", "lt", "ga" ],
-                "target": [ "en" ]
+                "target": [ "en", "es", "bg", "fr", "ro", "sk", "pt", "de", "ga", "it", "lv", "hu", "nl" ]
             },
             {
                 "source": [ "en" ],
