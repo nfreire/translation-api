@@ -31,7 +31,7 @@ import org.springframework.data.redis.connection.RedisConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
@@ -350,7 +350,7 @@ public class TranslationApiAutoconfig implements ApplicationListener<Application
      * This is needed to avoid some cases redis closes all channels and does not allow any subscriptions (please see here: https://github.com/spring-projects/spring-data-redis/issues/2425).
      * In this case we create one channel that is never un-subscribed from.
      */
-    container.addMessageListener(messageListenerAdapter, new PatternTopic("default"));
+    container.addMessageListener(messageListenerAdapter, ChannelTopic.of("default"));
 //    container.addMessageListener(messageListener(), topic()); 
     return container; 
   }
