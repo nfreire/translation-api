@@ -172,7 +172,7 @@ public class TranslationRestIT extends BaseTranslationTest {
     
     mockMvc
     .perform(
-        post("/eTranslation/callback").characterEncoding(StandardCharsets.UTF_8)
+        post("/etranslation/callback").characterEncoding(StandardCharsets.UTF_8)
         .param("external-reference", eTranslRef)
         .param("translated-text", translatedText.toString()))
     .andExpect(status().isOk());

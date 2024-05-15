@@ -40,6 +40,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private final String domain;
   //this is the base url of the translation api (without the request handler (or the controller) endpoint)
   private final String callbackUrl;
+  private final String callbackErrorUrl;
   private final String credentialUsername;
   private final String credentialPwd;
   private final int maxWaitMillisec;
@@ -47,23 +48,25 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   public static final String baseUrlTests="base-url-for-testing";
   public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
   public static final String markupDelimiterWithoutNewline="deenPVsaOg";
+  public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
   
-  public ETranslationTranslationService(String baseUrl, String domain, String callbackUrl, int maxWaitMillisec, 
+  public ETranslationTranslationService(String baseUrl, String domain, String callbackUrl, String callbackErrorUrl, int maxWaitMillisec, 
       String username, String password, RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
     if(!baseUrlTests.equals(baseUrl)) {
-      validateETranslConfigParams(baseUrl, domain, callbackUrl, maxWaitMillisec, username, password);
+      validateETranslConfigParams(baseUrl, domain, callbackUrl, callbackErrorUrl, maxWaitMillisec, username, password);
     }
     this.baseUrl = baseUrl;
     this.domain = domain;
     this.callbackUrl=callbackUrl;
+    this.callbackErrorUrl=callbackErrorUrl;
     this.maxWaitMillisec=maxWaitMillisec;
     this.credentialUsername=username;
     this.credentialPwd=password;
     this.redisMessageListenerContainer=redisMessageListenerContainer;
   }
   
-  private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl, 
-      int maxWaitMillisec, String username, String password) throws TranslationException {
+  private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl,
+      String callbackErrorUrl, int maxWaitMillisec, String username, String password) throws TranslationException {
     List<String> missingParams= new ArrayList<>(6);
     if(StringUtils.isBlank(baseUrl)) {
       missingParams.add("baseUrl");
@@ -73,6 +76,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     }
     if(StringUtils.isBlank(callbackUrl)) {
       missingParams.add("callbackUrl");
+    }
+    if(StringUtils.isBlank(callbackErrorUrl)) {
+      missingParams.add("callbackErrorUrl");
     }
     if(maxWaitMillisec<=0) {
       missingParams.add("maxWaitMillisec (must be >0)");
@@ -240,6 +246,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private String createTranslationBodyWithPlainText(String text, String sourceLang, String targetLang, String externalReference) throws JSONException {
     JSONObject jsonBody = new JSONObject().put("priority", 0)
             .put("requesterCallback", callbackUrl)
+            .put("errorCallback", callbackErrorUrl)
             .put("externalReference", externalReference)
             .put("callerInformation", new JSONObject().put("application", credentialUsername).put("username", credentialUsername))
             .put("sourceLanguage", sourceLang.toUpperCase(Locale.ENGLISH))
@@ -272,7 +279,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     String base64EncodedText=Base64.encodeBase64String(text.getBytes(StandardCharsets.UTF_8));
     JSONObject jsonBody = new JSONObject().put("priority", 0)
 //        .put("requesterCallback", callbackUrl)
-//        .put("errorCallback", callbackUrl)
+//        .put("errorCallback", callbackErrorUrl)
         .put("externalReference", externalReference)
         .put("callerInformation", new JSONObject().put("application", credentialUsername).put("username", credentialUsername))
         .put("sourceLanguage", sourceLang.toUpperCase(Locale.ENGLISH))

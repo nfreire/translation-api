@@ -67,6 +67,9 @@ public class TranslationConfig{
   @Value("${translation.eTranslation.callback:#{null}}")
   private String etranslationCallback;
 
+  @Value("${translation.eTranslation.error.callback:#{null}}")
+  private String etranslationErrorCallback;
+
   @Value("${translation.eTranslation.maxWaitMillisec:30000}")
   private int etranslationMaxWaitMillisec;
 
@@ -172,6 +175,10 @@ public class TranslationConfig{
 
   public String getEtranslationCallback() {
     return etranslationCallback;
+  }
+
+  public String getEtranslationErrorCallback() {
+    return etranslationErrorCallback;
   }
 
   public int getEtranslationMaxWaitMillisec() {
