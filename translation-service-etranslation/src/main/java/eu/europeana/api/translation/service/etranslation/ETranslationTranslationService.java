@@ -166,7 +166,11 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       if(LOGGER.isDebugEnabled()) {
         LOGGER.debug("Received message from redis message listener is: {}", response);
       }
-      if(response!=null) {
+      if(response.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
+        //eTtransl error callback received
+        throw new TranslationException(response);
+      }
+      else if(response!=null) {
         //extractTranslationsFromETranslationHtmlResponse(translationObjs, redisMessageListenerAdapter, response);
         extractTranslationsFromETranslationResponse(translationObjs, redisMessageListenerAdapter, response);
       }

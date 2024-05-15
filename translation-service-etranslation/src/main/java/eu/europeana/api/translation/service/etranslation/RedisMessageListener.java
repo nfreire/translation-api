@@ -23,7 +23,7 @@ public class RedisMessageListener implements MessageListener {
         String messageBody=new String(message.getBody(), StandardCharsets.UTF_8);
         if(messageBody.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
           //if we enter here, means the eTranslation error callback is called
-          this.message=null;
+          this.message=messageBody;
         }
         else {
           /* 
