@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import eu.europeana.api.commons.definitions.utils.LoggingUtils;
+import eu.europeana.api.translation.service.etranslation.ETranslationTranslationService;
 import eu.europeana.api.translation.web.model.CachedTranslation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
@@ -25,7 +26,7 @@ public class ETranslationCallbackController {
   }
 
   @Tag(description = "ETranslation callback endpoint", name = "eTranslationCallback")
-  @PostMapping(value = "/eTranslation/callback")
+  @PostMapping(value = "/etranslation/callback")
   public void eTranslationCallback(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
@@ -33,12 +34,32 @@ public class ETranslationCallbackController {
       @RequestParam(value = "external-reference", required = true) String externalReference,
       @RequestBody(required = false) String body) {
     if(LOGGER.isDebugEnabled()) {
-      LOGGER.debug("eTranslation callback on translation api has been received with the request-id: {}, and the"
+      LOGGER.debug("eTranslation callback has been received with the request-id: {}, and the"
           + " external-reference: {}", LoggingUtils.sanitizeUserInput(requestId), LoggingUtils.sanitizeUserInput(externalReference));
     }
     if(externalReference!=null && translatedTextSnippet!=null) {
       redisTemplate.convertAndSend(externalReference, translatedTextSnippet);
     }
   } 
-  
+
+  @Tag(description = "ETranslation error callback endpoint", name = "eTranslationErrorCallback")
+  @PostMapping(value = "/etranslation/error-callback")
+  public void eTranslationErrorCallback(
+      @RequestParam(value = "error-code", required = false) String errorCode,
+      @RequestParam(value = "error-message", required = false) String errorMessage,
+      @RequestParam(value = "target-languages", required = false) String targetLanguages,
+      @RequestParam(value = "request-id", required = false) String requestId,
+      @RequestParam(value = "external-reference", required = false) String externalReference,
+      @RequestBody(required = false) String body) {
+    if(LOGGER.isDebugEnabled()) {
+      LOGGER.debug("eTranslation error callback has been received with the following parameters: error-code: {},"
+          + "error-message: {}, request-id: {}, external-reference: {}", LoggingUtils.sanitizeUserInput(errorCode),
+          LoggingUtils.sanitizeUserInput(errorMessage), LoggingUtils.sanitizeUserInput(requestId), LoggingUtils.sanitizeUserInput(externalReference));
+    }
+    if(externalReference!=null) {
+      redisTemplate.convertAndSend(externalReference, String.format("%s: error-code=%s, error-message=%s", 
+          ETranslationTranslationService.eTranslationErrorCallbackIndicator, errorCode, errorMessage));
+    }
+  } 
+
 }
