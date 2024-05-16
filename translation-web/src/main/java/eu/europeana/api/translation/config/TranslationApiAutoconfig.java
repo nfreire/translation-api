@@ -223,8 +223,7 @@ public class TranslationApiAutoconfig implements ApplicationListener<Application
     return new ETranslationTranslationService(
         translationConfig.getEtranslationBaseUrl(), 
         translationConfig.getEtranslationDomain(), 
-        translationConfig.getEtranslationCallback(),
-        translationConfig.getEtranslationErrorCallback(),
+        translationConfig.getTranslationApiBaseUrl(),
         translationConfig.getEtranslationMaxWaitMillisec(), 
         translationConfig.getEtranslationUsername(),
         translationConfig.getEtranslationPassword(),
