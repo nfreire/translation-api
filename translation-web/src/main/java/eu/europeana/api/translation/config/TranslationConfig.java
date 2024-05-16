@@ -19,6 +19,9 @@ public class TranslationConfig{
 
   public static final String CONFIG_FOLDER = "/opt/app/config"; 
 
+  @Value("${translation.api.baseUrl:#{null}}")
+  private String translationApiBaseUrl;
+
   @Value("${europeana.apikey.jwttoken.signaturekey:}")
   private String apiKeyPublicKey;
 
@@ -63,13 +66,7 @@ public class TranslationConfig{
 
   @Value("${translation.eTranslation.domain:#{null}}")
   private String etranslationDomain;
-
-  @Value("${translation.eTranslation.callback:#{null}}")
-  private String etranslationCallback;
-
-  @Value("${translation.eTranslation.error.callback:#{null}}")
-  private String etranslationErrorCallback;
-
+  
   @Value("${translation.eTranslation.maxWaitMillisec:30000}")
   private int etranslationMaxWaitMillisec;
 
@@ -81,6 +78,10 @@ public class TranslationConfig{
   
   public TranslationConfig() {
     super();
+  }
+
+  public String getTranslationApiBaseUrl() {
+    return translationApiBaseUrl;
   }
 
   public String getApiKeyPublicKey() {
@@ -171,14 +172,6 @@ public class TranslationConfig{
 
   public String getEtranslationDomain() {
     return etranslationDomain;
-  }
-
-  public String getEtranslationCallback() {
-    return etranslationCallback;
-  }
-
-  public String getEtranslationErrorCallback() {
-    return etranslationErrorCallback;
   }
 
   public int getEtranslationMaxWaitMillisec() {

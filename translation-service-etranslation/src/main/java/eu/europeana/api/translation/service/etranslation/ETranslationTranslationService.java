@@ -38,7 +38,6 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private String serviceId;
   private final String baseUrl;
   private final String domain;
-  //this is the base url of the translation api (without the request handler (or the controller) endpoint)
   private final String callbackUrl;
   private final String callbackErrorUrl;
   private final String credentialUsername;
@@ -49,24 +48,26 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
   public static final String markupDelimiterWithoutNewline="deenPVsaOg";
   public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
+  public static final String eTranslationCallbackRelativeUrl="/etranslation/callback";
+  public static final String eTranslationErrorCallbackRelativeUrl="/etranslation/error-callback";
   
-  public ETranslationTranslationService(String baseUrl, String domain, String callbackUrl, String callbackErrorUrl, int maxWaitMillisec, 
+  public ETranslationTranslationService(String baseUrl, String domain, String translationApiBaseUrl, int maxWaitMillisec, 
       String username, String password, RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
     if(!baseUrlTests.equals(baseUrl)) {
-      validateETranslConfigParams(baseUrl, domain, callbackUrl, callbackErrorUrl, maxWaitMillisec, username, password);
+      validateETranslConfigParams(baseUrl, domain, translationApiBaseUrl, maxWaitMillisec, username, password);
     }
     this.baseUrl = baseUrl;
     this.domain = domain;
-    this.callbackUrl=callbackUrl;
-    this.callbackErrorUrl=callbackErrorUrl;
+    this.callbackUrl=translationApiBaseUrl + eTranslationCallbackRelativeUrl;
+    this.callbackErrorUrl=translationApiBaseUrl + eTranslationErrorCallbackRelativeUrl;
     this.maxWaitMillisec=maxWaitMillisec;
     this.credentialUsername=username;
     this.credentialPwd=password;
     this.redisMessageListenerContainer=redisMessageListenerContainer;
   }
   
-  private void validateETranslConfigParams(String baseUrl, String domain, String callbackUrl,
-      String callbackErrorUrl, int maxWaitMillisec, String username, String password) throws TranslationException {
+  private void validateETranslConfigParams(String baseUrl, String domain, String translationApiBaseUrl,
+      int maxWaitMillisec, String username, String password) throws TranslationException {
     List<String> missingParams= new ArrayList<>(6);
     if(StringUtils.isBlank(baseUrl)) {
       missingParams.add("baseUrl");
@@ -74,11 +75,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     if(StringUtils.isBlank(domain)) {
       missingParams.add("domain");
     }
-    if(StringUtils.isBlank(callbackUrl)) {
-      missingParams.add("callbackUrl");
-    }
-    if(StringUtils.isBlank(callbackErrorUrl)) {
-      missingParams.add("callbackErrorUrl");
+    if(StringUtils.isBlank(translationApiBaseUrl)) {
+      missingParams.add("translationApiBaseUrl");
     }
     if(maxWaitMillisec<=0) {
       missingParams.add("maxWaitMillisec (must be >0)");
@@ -166,13 +164,16 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       if(LOGGER.isDebugEnabled()) {
         LOGGER.debug("Received message from redis message listener is: {}", response);
       }
-      if(response.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
-        //eTtransl error callback received
-        throw new TranslationException(response);
-      }
-      else if(response!=null) {
-        //extractTranslationsFromETranslationHtmlResponse(translationObjs, redisMessageListenerAdapter, response);
-        extractTranslationsFromETranslationResponse(translationObjs, redisMessageListenerAdapter, response);
+
+      if(response!=null) {
+        if(response.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
+          //eTtransl error callback received
+          throw new TranslationException(response);
+        }
+        else {
+          //extractTranslationsFromETranslationHtmlResponse(translationObjs, redisMessageListenerAdapter, response);
+          extractTranslationsFromETranslationResponse(translationObjs, redisMessageListenerAdapter, response);
+        }
       }
       /* unsubscibe this listener which automatically deletes the created pub/sub channel,
        * which also gets deleted if the app is stopped or anyhow broken.
@@ -320,6 +321,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     long requestNumber;
     try{
       requestNumber = Long.parseLong(respBody);
+      if(LOGGER.isDebugEnabled()) {
+        LOGGER.debug("eTranslation request sent with the request-id: {} .", requestNumber);
+      }
       if(requestNumber < 0) {
         throw wrapETranslationErrorResponse(respBody);
       }

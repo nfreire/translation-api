@@ -26,7 +26,7 @@ public class ETranslationCallbackController {
   }
 
   @Tag(description = "ETranslation callback endpoint", name = "eTranslationCallback")
-  @PostMapping(value = "/etranslation/callback")
+  @PostMapping(value = ETranslationTranslationService.eTranslationCallbackRelativeUrl)
   public void eTranslationCallback(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
@@ -43,7 +43,7 @@ public class ETranslationCallbackController {
   } 
 
   @Tag(description = "ETranslation error callback endpoint", name = "eTranslationErrorCallback")
-  @PostMapping(value = "/etranslation/error-callback")
+  @PostMapping(value = ETranslationTranslationService.eTranslationErrorCallbackRelativeUrl)
   public void eTranslationErrorCallback(
       @RequestParam(value = "error-code", required = false) String errorCode,
       @RequestParam(value = "error-message", required = false) String errorMessage,
