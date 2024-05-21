@@ -37,8 +37,14 @@ public class ETranslationCallbackController {
       LOGGER.debug("eTranslation callback has been received with the request-id: {}, and the"
           + " external-reference: {}", LoggingUtils.sanitizeUserInput(requestId), LoggingUtils.sanitizeUserInput(externalReference));
     }
-    if(externalReference!=null && translatedTextSnippet!=null) {
-      redisTemplate.convertAndSend(externalReference, translatedTextSnippet);
+    /*
+     * in case we send a document for the translation, we get the output in the body, or otherwise,
+     * if we send a text snippet in the text-to-translate field, we ge the output in the translated-text parameter 
+     * (although also extracted from the body)
+     */
+    String translations = translatedTextSnippet!=null ? translatedTextSnippet : body;
+    if(externalReference!=null && translations!=null) {
+      redisTemplate.convertAndSend(externalReference, translations);
     }
   } 
 

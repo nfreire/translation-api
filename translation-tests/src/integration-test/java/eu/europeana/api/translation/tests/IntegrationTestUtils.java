@@ -43,6 +43,7 @@ public abstract class IntegrationTestUtils {
   public static final String TRANSLATION_PANGEANIC_RESPONSE_2 = "/content/pangeanic/translate/translate_pangeanic_response_2.json";
   
   public static final String TRANSLATION_REQUEST_E_TRANSLATION = "/content/translation_request_eTranslation.json";
+  public static final String TRANSLATION_REQUEST_E_TRANSLATION_LONGER = "/content/translation_request_eTranslation_longer.json";
   
   public static final String TRANSLATION_REQUEST_PANGEANIC_MULTIPLE_LANG = "/content/translation_pangeanic_multiple_languages_request.json";
   public static final String TRANSLATION_PANGEANIC_REQUEST_MULTIPLE_LANG_DE = "/content/pangeanic/translate/translate_pangeanic_multiple_languages_request_DE.json";

@@ -125,9 +125,9 @@ public class TranslationRestIT extends BaseTranslationTest {
     assertNotNull(serviceFieldValue);
   }
 
-  class eTranslationSimulatorThread implements Runnable {
+  class eTranslationSimulatorThreadForTextSnippetTranslation implements Runnable {
     private MockMvc mockMvc;
-    public eTranslationSimulatorThread(MockMvc mockMvc) {
+    public eTranslationSimulatorThreadForTextSnippetTranslation(MockMvc mockMvc) {
       this.mockMvc = mockMvc;
     }
     @Override
@@ -156,10 +156,49 @@ public class TranslationRestIT extends BaseTranslationTest {
       }
     }
   }
-  
+
+  class eTranslationSimulatorThreadForDocumentTranslation implements Runnable {
+    private MockMvc mockMvc;
+    public eTranslationSimulatorThreadForDocumentTranslation(MockMvc mockMvc) {
+      this.mockMvc = mockMvc;
+    }
+    @Override
+    public void run() {
+      try {
+        String requestJson = getJsonStringInput(TRANSLATION_REQUEST_E_TRANSLATION_LONGER);
+        String result = mockMvc
+            .perform(
+                post(BASE_URL_TRANSLATE)
+                  .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                  .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                  .content(requestJson))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        
+        assertNotNull(result);
+        JSONObject json = new JSONObject(result);
+        String langFieldValue = json.getString(TranslationAppConstants.LANG);
+        assertEquals(LANGUAGE_EN, langFieldValue);
+            
+        List<String> translations = Collections.singletonList(json.getString(TranslationAppConstants.TRANSLATIONS));
+        assertTrue(translations.contains("test first line in German, eight on caching, no cache 1!") 
+            && translations.contains("a second text in German, can be cached....") 
+            && translations.contains("a second text in German, can be cached....")
+            && translations.contains("a third text in German, such as this")
+            && translations.contains("and a fourth text such as: today’s news on www.heute.at"));
+        String serviceFieldValue = json.getString(TranslationAppConstants.SERVICE);
+        assertNotNull(serviceFieldValue);
+      } catch (Exception e) {
+      }
+    }
+  }
+
+  /*
+   * eTranslation that uses a text snippet based translation
+   */
   @Test
-  void translationETranslation() throws Exception {
-    Thread thread = new Thread(new eTranslationSimulatorThread(mockMvc));
+  void translationETranslationTextSnippet() throws Exception {
+    Thread thread = new Thread(new eTranslationSimulatorThreadForTextSnippetTranslation(mockMvc));
     thread.start();
     Thread.sleep(1000);
     //trigger the eTranslation callback manually
@@ -179,6 +218,31 @@ public class TranslationRestIT extends BaseTranslationTest {
 
     thread.join();
     
+  }
+
+  /*
+   * eTranslation that uses a document based translation
+   */
+  @Test
+  void translationETranslationDocument() throws Exception {    
+    Thread thread = new Thread(new eTranslationSimulatorThreadForDocumentTranslation(mockMvc));
+    thread.start();
+    Thread.sleep(1000);
+    //trigger the eTranslation callback manually
+    //computed in advance using the code in the eTransl service
+    String eTranslRef="et:deenC+N14w";
+    //base64 encoded translations
+    String translatedText="dGVzdCBmaXJzdCBsaW5lIGluIEdlcm1hbiwgZWlnaHQgb24gY2FjaGluZywgbm8gY2FjaGUgMSEKZGVlblBWc2FPZwphIHNlY29uZCB0ZXh0IGluIEdlcm1hbiwgY2FuIGJlIGNhY2hlZC4uLi4KZGVlblBWc2FPZwphIHRoaXJkIHRleHQgaW4gR2VybWFuLCBzdWNoIGFzIHRoaXMKZGVlblBWc2FPZwphbmQgYSBmb3VydGggdGV4dCBzdWNoIGFzOiB0b2RheeKAmXMgbmV3cyBvbiB3d3cuaGV1dGUuYXQ=";
+    
+    mockMvc
+    .perform(
+        post(ETranslationTranslationService.eTranslationCallbackRelativeUrl).characterEncoding(StandardCharsets.UTF_8)
+        .param("external-reference", eTranslRef)
+        .content(translatedText))
+    .andExpect(status().isOk());
+
+    thread.join();
+   
   }
 
   @Test
