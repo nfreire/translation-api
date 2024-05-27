@@ -72,10 +72,10 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     return this.translationApiBaseUrl + eTranslationCallbackRelativeUrl;
   }
   
-  private void validateETranslConfigParams(String baseUrl, String domain, String translationApiBaseUrl,
+  private void validateETranslConfigParams(String etranslationServiceBaseUrl, String domain, String translationApiBaseUrl,
       int maxWaitMillisec, String username, String password) throws TranslationException {
     List<String> missingParams= new ArrayList<>(6);
-    if(StringUtils.isBlank(baseUrl)) {
+    if(StringUtils.isBlank(etranslationServiceBaseUrl)) {
       missingParams.add("baseUrl");
     }
     if(StringUtils.isBlank(domain)) {
@@ -309,9 +309,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(credentialUsername, credentialPwd));
     CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCredentialsProvider(credsProvider).build();
     HttpPost request = new HttpPost(baseUrl);
-    StringEntity params = new StringEntity(content, "UTF-8");
+    StringEntity body = new StringEntity(content, "UTF-8");
     request.addHeader("content-type", "application/json");
-    request.setEntity(params);
+    request.setEntity(body);
     
     CloseableHttpResponse response = httpClient.execute(request);
     StatusLine respStatusLine = response.getStatusLine();
@@ -326,7 +326,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     try{
       requestNumber = Long.parseLong(respBody);
       if(LOGGER.isDebugEnabled()) {
-        LOGGER.debug("eTranslation request sent with the request-id: {} .", requestNumber);
+        LOGGER.debug("eTranslation request sent with the request-id: {} and body: {}.", requestNumber, body);
       }
       if(requestNumber < 0) {
         throw wrapETranslationErrorResponse(respBody);
