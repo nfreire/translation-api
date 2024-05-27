@@ -326,7 +326,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     try{
       requestNumber = Long.parseLong(respBody);
       if(LOGGER.isDebugEnabled()) {
-        LOGGER.debug("eTranslation request sent with the request-id: {} and body: {}.", requestNumber, body.getContent());
+        LOGGER.debug("eTranslation request sent with the request-id: {} and body: {}.", requestNumber, content);
       }
       if(requestNumber < 0) {
         throw wrapETranslationErrorResponse(respBody);
