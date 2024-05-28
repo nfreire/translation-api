@@ -30,9 +30,9 @@ public class ETranslationCallbackController {
   @PostMapping(value = ETranslationTranslationService.eTranslationCallbackRelativeUrl)
   public void eTranslationCallbackPost(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
-      @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
-      @RequestParam(value = "request-id", required = false) String requestId,
-      @RequestParam(value = "external-reference", required = false) String externalReference,
+      @RequestParam(value = "translated-text", required = true) String translatedTextSnippet,
+      @RequestParam(value = "request-id", required = true) String requestId,
+      @RequestParam(value = "external-reference", required = true) String externalReference,
       @RequestBody(required = false) String body) {
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("eTranslation callback has been received with the request-id: {}, and the"
@@ -47,9 +47,9 @@ public class ETranslationCallbackController {
   @GetMapping(value = ETranslationTranslationService.eTranslationCallbackRelativeUrl)
   public void eTranslationCallbackGet(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
-      @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
-      @RequestParam(value = "request-id", required = false) String requestId,
-      @RequestParam(value = "external-reference", required = false) String externalReference) {
+      @RequestParam(value = "translated-text", required = true) String translatedTextSnippet,
+      @RequestParam(value = "request-id", required = true) String requestId,
+      @RequestParam(value = "external-reference", required = true) String externalReference) {
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("eTranslation callback has been received with the request-id: {}, and the"
           + " external-reference: {}", LoggingUtils.sanitizeUserInput(requestId), LoggingUtils.sanitizeUserInput(externalReference));

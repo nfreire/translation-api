@@ -34,7 +34,13 @@ import eu.europeana.api.translation.service.util.TranslationUtils;
 public class ETranslationTranslationService extends AbstractTranslationService {
   
   private static final Logger LOGGER = LogManager.getLogger(ETranslationTranslationService.class);
-
+  public static final String baseUrlTests="base-url-for-testing";
+  public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
+  public static final String markupDelimiterWithoutNewline="deenPVsaOg";
+  public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
+  public static final String eTranslationCallbackRelativeUrl="/etranslation/callback";
+  public static final String eTranslationErrorCallbackRelativeUrl="/etranslation/error-callback";
+  
   private String serviceId;
   private final String baseUrl;
   private final String domain;
@@ -43,12 +49,6 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private final String credentialPwd;
   private final int maxWaitMillisec;
   private final RedisMessageListenerContainer redisMessageListenerContainer;
-  public static final String baseUrlTests="base-url-for-testing";
-  public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
-  public static final String markupDelimiterWithoutNewline="deenPVsaOg";
-  public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
-  public static final String eTranslationCallbackRelativeUrl="/etranslation/callback";
-  public static final String eTranslationErrorCallbackRelativeUrl="/etranslation/error-callback";
   
   public ETranslationTranslationService(String etranslationServiceBaseUrl, String domain, String translationApiBaseUrl, int maxWaitMillisec, 
       String username, String password, RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
