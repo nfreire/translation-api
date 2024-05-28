@@ -34,7 +34,13 @@ import eu.europeana.api.translation.service.util.TranslationUtils;
 public class ETranslationTranslationService extends AbstractTranslationService {
   
   private static final Logger LOGGER = LogManager.getLogger(ETranslationTranslationService.class);
-
+  public static final String baseUrlTests="base-url-for-testing";
+  public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
+  public static final String markupDelimiterWithoutNewline="deenPVsaOg";
+  public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
+  public static final String eTranslationCallbackRelativeUrl="/etranslation/callback";
+  public static final String eTranslationErrorCallbackRelativeUrl="/etranslation/error-callback";
+  
   private String serviceId;
   private final String baseUrl;
   private final String domain;
@@ -43,12 +49,6 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private final String credentialPwd;
   private final int maxWaitMillisec;
   private final RedisMessageListenerContainer redisMessageListenerContainer;
-  public static final String baseUrlTests="base-url-for-testing";
-  public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
-  public static final String markupDelimiterWithoutNewline="deenPVsaOg";
-  public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
-  public static final String eTranslationCallbackRelativeUrl="/etranslation/callback";
-  public static final String eTranslationErrorCallbackRelativeUrl="/etranslation/error-callback";
   
   public ETranslationTranslationService(String etranslationServiceBaseUrl, String domain, String translationApiBaseUrl, int maxWaitMillisec, 
       String username, String password, RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
@@ -72,10 +72,10 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     return this.translationApiBaseUrl + eTranslationCallbackRelativeUrl;
   }
   
-  private void validateETranslConfigParams(String baseUrl, String domain, String translationApiBaseUrl,
+  private void validateETranslConfigParams(String etranslationServiceBaseUrl, String domain, String translationApiBaseUrl,
       int maxWaitMillisec, String username, String password) throws TranslationException {
     List<String> missingParams= new ArrayList<>(6);
-    if(StringUtils.isBlank(baseUrl)) {
+    if(StringUtils.isBlank(etranslationServiceBaseUrl)) {
       missingParams.add("baseUrl");
     }
     if(StringUtils.isBlank(domain)) {
@@ -309,9 +309,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(credentialUsername, credentialPwd));
     CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCredentialsProvider(credsProvider).build();
     HttpPost request = new HttpPost(baseUrl);
-    StringEntity params = new StringEntity(content, "UTF-8");
+    StringEntity body = new StringEntity(content, "UTF-8");
     request.addHeader("content-type", "application/json");
-    request.setEntity(params);
+    request.setEntity(body);
     
     CloseableHttpResponse response = httpClient.execute(request);
     StatusLine respStatusLine = response.getStatusLine();
@@ -326,7 +326,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     try{
       requestNumber = Long.parseLong(respBody);
       if(LOGGER.isDebugEnabled()) {
-        LOGGER.debug("eTranslation request sent with the request-id: {} .", requestNumber);
+        LOGGER.debug("eTranslation request sent with the request-id: {} and body: {}.", requestNumber, content);
       }
       if(requestNumber < 0) {
         throw wrapETranslationErrorResponse(respBody);
