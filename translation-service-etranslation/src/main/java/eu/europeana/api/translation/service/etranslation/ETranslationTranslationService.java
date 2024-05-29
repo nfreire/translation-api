@@ -38,8 +38,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   public static final String markupDelimiter="\ndeenPVsaOg\n";//base64 encoded string (as in generateRedisKey()) with new lines
   public static final String markupDelimiterWithoutNewline="deenPVsaOg";
   public static final String eTranslationErrorCallbackIndicator="eTranslationErrorCallback";
-  public static final String eTranslationCallbackRelativeUrl="/eTranslation/callback";
-  public static final String eTranslationErrorCallbackRelativeUrl="/eTranslation/error-callback";
+  public static final String eTranslationCallbackRelativeUrl="/etranslation/callback";
+  public static final String eTranslationErrorCallbackRelativeUrl="/etranslation/error-callback";
   
   private String serviceId;
   private final String baseUrl;
