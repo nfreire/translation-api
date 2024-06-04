@@ -203,7 +203,7 @@ public class TranslationRestIT extends BaseTranslationTest {
     Thread.sleep(1000);
     //trigger the eTranslation callback manually
     //computed in advance using the code in the eTransl service
-    String eTranslRef="et:deen0E3jxg";
+    String eTranslRef="et:deenre7d+w";
     StringBuilder translatedText=new StringBuilder();
     translatedText.append("That is my dog.");
     translatedText.append(ETranslationTranslationService.markupDelimiter);
@@ -213,6 +213,7 @@ public class TranslationRestIT extends BaseTranslationTest {
     .perform(
         post(ETranslationTranslationService.eTranslationCallbackRelativeUrl).characterEncoding(StandardCharsets.UTF_8)
         .param("external-reference", eTranslRef)
+        .param("request-id", "1")
         .param("translated-text", translatedText.toString()))
     .andExpect(status().isOk());
 
@@ -230,20 +231,23 @@ public class TranslationRestIT extends BaseTranslationTest {
     Thread.sleep(1000);
     //trigger the eTranslation callback manually
     //computed in advance using the code in the eTransl service
-    String eTranslRef="et:deenC+N14w";
+    String eTranslRef="et:deen9Aie9A";
     //base64 encoded translations
-    String translatedText="dGVzdCBmaXJzdCBsaW5lIGluIEdlcm1hbiwgZWlnaHQgb24gY2FjaGluZywgbm8gY2FjaGUgMSEKZGVlblBWc2FPZwphIHNlY29uZCB0ZXh0IGluIEdlcm1hbiwgY2FuIGJlIGNhY2hlZC4uLi4KZGVlblBWc2FPZwphIHRoaXJkIHRleHQgaW4gR2VybWFuLCBzdWNoIGFzIHRoaXMKZGVlblBWc2FPZwphbmQgYSBmb3VydGggdGV4dCBzdWNoIGFzOiB0b2RheeKAmXMgbmV3cyBvbiB3d3cuaGV1dGUuYXQ=";
+    String translatedText="dGVzdCBmaXJzdCBsaW5lIGluIEdlcm1hbiwgZWlnaHQgb24gY2FjaGluZywgbm8gY2FjaGUgMSEKW25vdHJhbnNsYXRlXWRlZW5QVnNhT2dbL25vdHJhbnNsYXRlXQphIHNlY29uZCB0ZXh0IGluIEdlcm1hbiwgY2FuIGJlIGNhY2hlZC4uLi4KW25vdHJhbnNsYXRlXWRlZW5QVnNhT2dbL25vdHJhbnNsYXRlXQphIHRoaXJkIHRleHQgaW4gR2VybWFuLCBzdWNoIGFzIHRoaXMKW25vdHJhbnNsYXRlXWRlZW5QVnNhT2dbL25vdHJhbnNsYXRlXQphbmQgYSBmb3VydGggdGV4dCBzdWNoIGFzOiB0b2RheeKAmXMgbmV3cyBvbiB3d3cuaGV1dGUuYXQ=";
     
     mockMvc
     .perform(
         post(ETranslationTranslationService.eTranslationCallbackRelativeUrl).characterEncoding(StandardCharsets.UTF_8)
         .param("external-reference", eTranslRef)
+        .param("request-id", "1")
         .content(translatedText))
     .andExpect(status().isOk());
 
     thread.join();
    
   }
+  
+  
 
   @Test
   void translationPangeanicNoSrcMultipleLanguages() throws Exception {

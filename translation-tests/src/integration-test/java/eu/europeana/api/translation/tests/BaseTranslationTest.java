@@ -133,6 +133,7 @@ public abstract class BaseTranslationTest extends IntegrationTestUtils {
     registry.add("redis.connection.url", () -> "redis://localhost:" + redisPort + "/");
     registry.add("translation.eTranslation.baseUrl", () -> ETranslationTranslationService.baseUrlTests);
     registry.add("translation.eTranslation.credentials", () -> "");
+    registry.add("translation.eTranslation.truncate", () -> false);
   }
 
   /**

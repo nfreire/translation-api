@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import eu.europeana.api.commons.error.EuropeanaI18nApiException;
+import eu.europeana.api.translation.config.TranslationConfig;
 import eu.europeana.api.translation.config.TranslationServiceProvider;
 import eu.europeana.api.translation.config.services.TranslationLangPairCfg;
 import eu.europeana.api.translation.definitions.language.LanguagePair;
@@ -19,11 +20,15 @@ import eu.europeana.api.translation.definitions.vocabulary.TranslationAppConstan
 import eu.europeana.api.translation.definitions.model.TranslationRequest;
 import eu.europeana.api.translation.definitions.model.TranslationResponse;
 import eu.europeana.api.translation.service.TranslationService;
+import eu.europeana.api.translation.service.etranslation.ETranslationTranslationService;
 import eu.europeana.api.translation.service.exception.TranslationException;
+import eu.europeana.api.translation.service.util.TranslationUtils;
 import eu.europeana.api.translation.web.exception.ParamValidationException;
 
 @Service
 public class TranslationWebService extends BaseWebService {
+  
+  @Autowired protected TranslationConfig translationConfig;
 
   @Autowired
   private final TranslationServiceProvider translationServiceProvider;
@@ -130,17 +135,98 @@ public class TranslationWebService extends BaseWebService {
     }
   }
 
+  /*
+   * This method is used only for the purpose of eTranslation stress test and can be excluded afterwards
+   */
+  private void limitTextSizeForETranslationStressTest(TranslationRequest translationRequest, List<TranslationObj> translObjs) {
+    StringBuilder translJointString = new StringBuilder(TranslationUtils.STRING_BUILDER_INIT_SIZE);
+    for (String inputText : translationRequest.getText()) {
+      if(translJointString.isEmpty()) {
+        if(inputText.length() <= ETranslationTranslationService.eTranslationTextSnippetLimit) {
+          translJointString.append(inputText);
+          
+          TranslationObj newTranslObj = new TranslationObj();
+          newTranslObj.setSourceLang(translationRequest.getSource());
+          newTranslObj.setTargetLang(translationRequest.getTarget());
+          newTranslObj.setText(inputText);
+          newTranslObj.setTranslated(false); // not translated yet hence set to false
+          translObjs.add(newTranslObj);
+
+        }
+        else {
+          String truncatedInput=inputText.substring(0, ETranslationTranslationService.eTranslationTextSnippetLimit);
+          translJointString.append(truncatedInput);
+          
+          TranslationObj newTranslObj = new TranslationObj();
+          newTranslObj.setSourceLang(translationRequest.getSource());
+          newTranslObj.setTargetLang(translationRequest.getTarget());
+          newTranslObj.setText(truncatedInput);
+          newTranslObj.setTranslated(false); // not translated yet hence set to false
+          translObjs.add(newTranslObj);
+          
+          break;
+        }
+      }
+      else {
+        int charsLeft=ETranslationTranslationService.eTranslationTextSnippetLimit - translJointString.length();
+        int charsLeftForNewText=charsLeft-ETranslationTranslationService.markupDelimiter.length();
+        if(charsLeftForNewText>0) {
+          if(charsLeftForNewText>=inputText.length()) {
+            translJointString.append(ETranslationTranslationService.markupDelimiter);
+            translJointString.append(inputText);
+            
+            TranslationObj newTranslObj = new TranslationObj();
+            newTranslObj.setSourceLang(translationRequest.getSource());
+            newTranslObj.setTargetLang(translationRequest.getTarget());
+            newTranslObj.setText(inputText);
+            newTranslObj.setTranslated(false); // not translated yet hence set to false
+            translObjs.add(newTranslObj);
+          }
+          else if(StringUtils.isNotEmpty(inputText.substring(0, charsLeftForNewText))) {
+            String truncatedInput=inputText.substring(0, charsLeftForNewText);
+            translJointString.append(ETranslationTranslationService.markupDelimiter);
+            translJointString.append(truncatedInput);
+            
+            TranslationObj newTranslObj = new TranslationObj();
+            newTranslObj.setSourceLang(translationRequest.getSource());
+            newTranslObj.setTargetLang(translationRequest.getTarget());
+            newTranslObj.setText(truncatedInput);
+            newTranslObj.setTranslated(false); // not translated yet hence set to false
+            translObjs.add(newTranslObj);
+            
+            break;
+          }
+          else {
+            break;
+          }
+        }
+        else {
+          break;
+        }
+      }
+    }
+  }
+  
   private List<TranslationObj> buildTranslationObjectList(TranslationRequest translationRequest) {
     // create a list of objects to be translated
     List<TranslationObj> translObjs = new ArrayList<TranslationObj>(translationRequest.getText().size());
-    for (String inputText : translationRequest.getText()) {
-      TranslationObj newTranslObj = new TranslationObj();
-      newTranslObj.setSourceLang(translationRequest.getSource());
-      newTranslObj.setTargetLang(translationRequest.getTarget());
-      newTranslObj.setText(inputText);
-      newTranslObj.setTranslated(false); // not translated yet hence set to false
-      translObjs.add(newTranslObj);
+    if(translationConfig.getEtranslationTruncate()
+        && ETranslationTranslationService.serviceIdDefault.equals(translationRequest.getService()) 
+        ) {
+      limitTextSizeForETranslationStressTest(translationRequest, translObjs);
     }
+    else {
+      //when we do not need the above method limitTextSizeForETranslationStressTest, leave just this for loop (as was before)
+      for (String inputText : translationRequest.getText()) {
+        TranslationObj newTranslObj = new TranslationObj();
+        newTranslObj.setSourceLang(translationRequest.getSource());
+        newTranslObj.setTargetLang(translationRequest.getTarget());
+        newTranslObj.setText(inputText);
+        newTranslObj.setTranslated(false); // not translated yet hence set to false
+        translObjs.add(newTranslObj);
+      }
+    }
+    
     return translObjs;
   }
 
