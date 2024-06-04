@@ -72,6 +72,9 @@ public class TranslationConfig{
 
   @Value("${translation.eTranslation.baseUrl:#{null}}")
   private String etranslationBaseUrl;
+  
+  @Value("${translation.eTranslation.truncate:#{null}}")
+  private boolean etranslationTruncate;
 
   @Value("${translation.dummy.services:false}")
   private boolean useDummyServices;
@@ -180,6 +183,10 @@ public class TranslationConfig{
 
   public String getEtranslationBaseUrl() {
     return etranslationBaseUrl;
+  }
+
+  public boolean getEtranslationTruncate() {
+    return etranslationTruncate;
   }
   
 }

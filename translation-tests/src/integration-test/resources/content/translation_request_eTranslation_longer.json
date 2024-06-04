@@ -1,0 +1,12 @@
+{
+  "source": "de",
+  "target": "en",
+  "service": "ETRANSLATION",
+  "text": [
+    "erste Textzeile auf Deutsch test, achte auf caching, no cache 1!",
+    "einen zweiten Text auf Deutsch, kann gecached werden....",
+    "einen dritten Text auf Deutsch, wie zum Beispiel diesen",
+    "und einen vierten Text wie: heutige Nachrichten auf www.heute.at"
+  ],
+  "caching":false
+}

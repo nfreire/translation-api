@@ -2,9 +2,12 @@ package eu.europeana.api.translation.service.etranslation;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -34,11 +37,11 @@ import eu.europeana.api.translation.service.util.TranslationUtils;
 public class ETranslationTranslationService extends AbstractTranslationService {
 
   private static final Logger LOGGER = LogManager.getLogger(ETranslationTranslationService.class);
+  public static final String serviceIdDefault="ETRANSLATION";
   public static final String baseUrlTests = "base-url-for-testing";
-  public static final String markupDelimiter = "\ndeenPVsaOg\n";// base64 encoded string (as in
-                                                                // generateRedisKey()) with new
-                                                                // lines
-  public static final String markupDelimiterWithoutNewline = "deenPVsaOg";
+  //base64 encoded string (as in generateRedisKey()) within the [notranslate] tag
+  public static final String markupDelimiter="\n[notranslate]deenPVsaOg[/notranslate]\n";
+  public static final String markupDelimiterWithoutNewline=Pattern.quote("[notranslate]deenPVsaOg[/notranslate]");
   public static final String eTranslationErrorCallbackIndicator = "eTranslationErrorCallback";
   public static final String eTranslationCallbackRelativeUrl = "/etranslation/callback";
   public static final String eTranslationErrorCallbackRelativeUrl = "/etranslation/error-callback";
@@ -51,7 +54,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private final String credentialPwd;
   private final int maxWaitMillisec;
   private final RedisMessageListenerContainer redisMessageListenerContainer;
-
+  public static final int eTranslationTextSnippetLimit=4990;
+  public static final int eTranslationTextSnippetLimitTests=200;
+  
   public ETranslationTranslationService(String etranslationServiceBaseUrl, String domain,
       String translationApiBaseUrl, int maxWaitMillisec, String username, String password,
       RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
@@ -131,13 +136,12 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     // create and send the eTransl request
     // baseUrl is different for the integration tests, where the eTranslation service will not be
     // called
+    
     if (!baseUrlTests.equals(baseUrl)) {
       try {
+        String body = createTranslationBody(eTranslJointStr,translationObjs.get(0).getSourceLang(),translationObjs.get(0).getTargetLang(),eTranslExtRef);
         // String body =
         // createTranslationBodyAsHtmlDocument(eTranslJointStr,translationObjs.get(0).getSourceLang(),translationObjs.get(0).getTargetLang(),eTranslExtRef);
-        String body = createTranslationBodyWithPlainText(eTranslJointStr,
-            translationObjs.get(0).getSourceLang(), translationObjs.get(0).getTargetLang(),
-            eTranslExtRef);
         createHttpRequest(body);
       } catch (JSONException | UnsupportedEncodingException e) {
         throw new TranslationException(
@@ -148,50 +152,25 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       }
     }
 
-    // create a redis message listener obj, and wait on that obj until it get notified from the
-    // redis publisher
-    readTranslationResponseFromRedis(translationObjs, eTranslExtRef);
-
+    //create a redis message listener obj, and wait on that obj until it get notified from the redis publisher
+    createRedisMessageListenerAndWaitForResults(translationObjs, eTranslExtRef, eTranslJointStr.length());      
   }
-
-  private void readTranslationResponseFromRedis(List<TranslationObj> translationObjs,
-      String eTranslExtRef) throws TranslationException {
-
-    String response = createRedisMessageListenerAndWaitForResults(eTranslExtRef);
-
-    if (response == null) {
-      throw new TranslationException(
-          "No response received from external eTranslation Service within expected interval of seconds: "
-              + toSeconds(maxWaitMillisec),
-          HttpStatus.SC_BAD_GATEWAY);
+  
+  private boolean isSnippetLimitExceeded(int textSize) {
+    //use smaller limit for the tests (e.g. 200)
+    if(baseUrlTests.equals(baseUrl)) {
+      return textSize>eTranslationTextSnippetLimitTests ? true : false;
     }
-
-      // message received, populate the translations
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Received message from redis message listener is: {}", response);
-      }
-
-      if (response.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
-        // eTtransl error callback received
-        throw new TranslationException(response, HttpStatus.SC_BAD_GATEWAY);
-      }
-
-      //fill translations into the provided translation list
-      fillTranslationsFromRemoteResponse(translationObjs, response);
+    else {
+      return textSize>eTranslationTextSnippetLimit ? true : false;
+    }
   }
-
-  private int toSeconds(int maxWaitMillisec) {
-    return maxWaitMillisec / 1000;
-  }
-
-  private String createRedisMessageListenerAndWaitForResults(String eTranslExtRef) {
-    String response;
-    RedisMessageListener redisMessageListener = new RedisMessageListener();
-    MessageListenerAdapter redisMessageListenerAdapter =
-        new MessageListenerAdapter(redisMessageListener);
-    redisMessageListenerContainer.addMessageListener(redisMessageListenerAdapter,
-        ChannelTopic.of(eTranslExtRef));
-
+  
+  private void createRedisMessageListenerAndWaitForResults(List<TranslationObj> translationObjs, String eTranslExtRef, int textSize) throws TranslationException {
+    boolean requestAsDocument=isSnippetLimitExceeded(textSize);
+    RedisMessageListener redisMessageListener = new RedisMessageListener(requestAsDocument);
+    MessageListenerAdapter redisMessageListenerAdapter = new MessageListenerAdapter(redisMessageListener);
+    redisMessageListenerContainer.addMessageListener(redisMessageListenerAdapter, ChannelTopic.of(eTranslExtRef));
     synchronized (redisMessageListener) {
       /*
        * While loop as a good practice to ensure spurious wake-ups
@@ -220,51 +199,95 @@ public class ETranslationTranslationService extends AbstractTranslationService {
           }
         }
       }
-      // one last try after the timeout
-      response = redisMessageListener.getMessage();
 
-      /*
-       * unsubscibe this listener which automatically deletes the created pub/sub channel, which
-       * also gets deleted if the app is stopped or anyhow broken.
+      //one last try after the timeout
+      String response=redisMessageListener.getMessage();
+      if(response!=null) {
+        //message received, populate the translations
+        if(LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Received message from redis message listener is: {}", response);
+        }
+        
+        if(response.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
+          //eTtransl error callback received
+          throw new TranslationException(response);
+        }
+        
+        extractTranslationsFromETranslationResponse(translationObjs, redisMessageListenerAdapter, response, requestAsDocument);
+
+      }
+      /* unsubscibe this listener which automatically deletes the created pub/sub channel,
+       * which also gets deleted if the app is stopped or anyhow broken.
        */
       redisMessageListenerContainer.removeMessageListener(redisMessageListenerAdapter);
     }
-    return response;
   }
 
+  private void extractTranslationsFromETranslationResponse(List<TranslationObj> translationObjs, MessageListenerAdapter redisMessageListenerAdapter, String response, boolean responseAsDocument) throws TranslationException {
+    if(responseAsDocument) {
+      extractTranslationsFromETranslationTextDocumentResponse(translationObjs, redisMessageListenerAdapter, response);
+    }
+    else {
+      extractTranslationsFromETranslationTextSnippetResponse(translationObjs, redisMessageListenerAdapter, response);
+    }
+  }
+  
   /**
-   * This method extracts the translations from the eTransl html response (the request is sent as an
-   * html base64 encoded document).
-   * 
+   * This method extracts the translations from the eTransl html document response
+   * (the request is sent as an html base64 encoded document).
    * @param translationObjs
    * @param response
    * @throws TranslationException
    */
   /*
-   * private void extractTranslationsFromETranslationHtmlResponse(List<TranslationObj>
-   * translationObjs, MessageListenerAdapter redisMessageListenerAdapter, String response) throws
-   * TranslationException { //first base64 decode String respBase64Decoded = new
-   * String(Base64.decodeBase64(response), StandardCharsets.UTF_8); Document jsoupDoc =
-   * Jsoup.parse(respBase64Decoded); Elements pTagTexts = jsoupDoc.select("p");
-   * if(pTagTexts.size()!=translationObjs.size()) {
-   * redisMessageListenerContainer.removeMessageListener(redisMessageListenerAdapter); throw new
-   * TranslationException("The eTranslation response and the input texts have different size."); }
-   * for(int i=0;i<pTagTexts.size();i++) {
-   * translationObjs.get(i).setTranslation(pTagTexts.get(i).ownText()); } }
-   */
+  private void extractTranslationsFromETranslationHtmlDocumentResponse(List<TranslationObj> translationObjs, MessageListenerAdapter redisMessageListenerAdapter, String response) throws TranslationException {
+    //first base64 decode
+    String respBase64Decoded = new String(Base64.decodeBase64(response), StandardCharsets.UTF_8);
+    Document jsoupDoc = Jsoup.parse(respBase64Decoded);
+    Elements pTagTexts = jsoupDoc.select("p");
+    if(pTagTexts.size()!=translationObjs.size()) {
+      redisMessageListenerContainer.removeMessageListener(redisMessageListenerAdapter);
+      throw new TranslationException("The eTranslation response and the input texts have different size.");
+    }
+    for(int i=0;i<pTagTexts.size();i++) {
+      translationObjs.get(i).setTranslation(pTagTexts.get(i).ownText());
+    }
+  }
+  */
 
-  private void fillTranslationsFromRemoteResponse(List<TranslationObj> translationObjs,
-      String response) throws TranslationException {
-    String[] translations = response.split(markupDelimiterWithoutNewline);
-    if (translations.length != translationObjs.size()) {
-      throw new TranslationException(
-          "The eTranslation response and the input texts have different size.");
+  /**
+   * This method extracts the translations from the eTransl txt document response
+   * (the request is sent as an txt base64 encoded document).
+   * @param translationObjs
+   * @param redisMessageListenerAdapter
+   * @param response
+   * @throws TranslationException
+   */
+  private void extractTranslationsFromETranslationTextDocumentResponse(List<TranslationObj> translationObjs, MessageListenerAdapter redisMessageListenerAdapter, String response) throws TranslationException {
+    //first base64 decode
+    String respBase64Decoded = new String(Base64.decodeBase64(response), StandardCharsets.UTF_8);
+    extractTranslationsFromETranslationTextSnippetResponse(translationObjs, redisMessageListenerAdapter, respBase64Decoded);
+  }
+
+  /**
+   * Extracts the translations in case the text snippet is sent in the request (as a text-to-translate parameter)
+   * @param translationObjs
+   * @param redisMessageListenerAdapter
+   * @param response
+   * @throws TranslationException
+   */
+  
+  private void extractTranslationsFromETranslationTextSnippetResponse(List<TranslationObj> translationObjs, MessageListenerAdapter redisMessageListenerAdapter, String response) throws TranslationException {
+    String[] translations=response.split(markupDelimiterWithoutNewline);
+    if(translations.length != translationObjs.size()) {
+      redisMessageListenerContainer.removeMessageListener(redisMessageListenerAdapter);
+      throw new TranslationException("The eTranslation response and the input texts have different size.");
     }
     for (int i = 0; i < translations.length; i++) {
       translationObjs.get(i).setTranslation(translations[i].strip());
     }
   }
-
+  
   /**
    * Generate one eTransl html string to be sent for the translation, as a combination of all input
    * texts. This way the eTransl translates it as a document.
@@ -296,8 +319,25 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     return translJointString.toString();
   }
 
-  private String createTranslationBodyWithPlainText(String text, String sourceLang,
-      String targetLang, String externalReference) throws JSONException {
+  private String createTranslationBody(String text, String sourceLang, String targetLang, String externalReference) throws JSONException {
+    if(isSnippetLimitExceeded(text.length())) {
+      return createTranslationBodyWithDocument(text, sourceLang, targetLang, externalReference);
+    }
+    else {
+      return createTranslationBodyWithTextSnippet(text, sourceLang, targetLang, externalReference);
+    }
+  }
+
+  /**
+   * Creates a request with a text-snippet to translate (no document to be sent).
+   * @param text
+   * @param sourceLang
+   * @param targetLang
+   * @param externalReference
+   * @return
+   * @throws JSONException
+   */
+  private String createTranslationBodyWithTextSnippet(String text, String sourceLang, String targetLang, String externalReference) throws JSONException {
     JSONObject jsonBody = new JSONObject().put("priority", 0)
         .put("requesterCallback", getTranslatioCallbackUrl())
         .put("errorCallback", getTranslationErrorCallbackUrl())
@@ -317,34 +357,37 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
     return jsonBody.toString();
   }
-
   /**
-   * This method creates the translation request body with an html document to translate. The
-   * response is sent back to the application over a specified callback URL (REST service).
-   * 
+   * This method creates the translation request body with a document to translate. 
+   * The response is sent back to the application over a specified callback URL 
+   * (REST service).
    * @param text
    * @param sourceLang
    * @param targetLang
    * @param externalReference
    * @return
    * @throws JSONException
-   * @throws UnsupportedEncodingException
-   */
-  /*
-   * private String createTranslationBodyAsHtmlDocument(String text, String sourceLang, String
-   * targetLang, String externalReference) throws JSONException { String
-   * base64EncodedText=Base64.encodeBase64String(text.getBytes(StandardCharsets.UTF_8)); JSONObject
-   * jsonBody = new JSONObject().put("priority", 0) // .put("requesterCallback", callbackUrl) //
-   * .put("errorCallback", callbackErrorUrl) .put("externalReference", externalReference)
-   * .put("callerInformation", new JSONObject().put("application",
-   * credentialUsername).put("username", credentialUsername)) .put("sourceLanguage",
-   * sourceLang.toUpperCase(Locale.ENGLISH)) .put("targetLanguages", new JSONArray().put(0,
-   * targetLang.toUpperCase(Locale.ENGLISH))) .put("domain", domain) .put("destinations", new
-   * JSONObject().put("httpDestinations", new JSONArray().put(0, callbackUrl))) //
-   * .put("textToTranslate", text); .put("documentToTranslateBase64", new
-   * JSONObject().put("content", base64EncodedText).put("format", "html") ); return
-   * jsonBody.toString(); }
-   */
+   * @throws UnsupportedEncodingException 
+   */  
+  private String createTranslationBodyWithDocument(String text, String sourceLang, String targetLang, String externalReference) 
+      throws JSONException {
+    String base64EncodedText=Base64.encodeBase64String(text.getBytes(StandardCharsets.UTF_8));
+    JSONObject jsonBody = new JSONObject().put("priority", 0)
+//        .put("requesterCallback", getTranslatioCallbackUrl())
+//        .put("errorCallback", getTranslationErrorCallbackUrl())
+        .put("externalReference", externalReference)
+        .put("callerInformation", new JSONObject().put("application", credentialUsername).put("username", credentialUsername))
+        .put("sourceLanguage", sourceLang.toUpperCase(Locale.ENGLISH))
+        .put("targetLanguages", new JSONArray().put(0, targetLang.toUpperCase(Locale.ENGLISH)))
+        .put("domain", domain)
+        .put("destinations",
+            new JSONObject().put("httpDestinations", new JSONArray().put(0, getTranslatioCallbackUrl())))
+//        .put("textToTranslate", text);
+        .put("documentToTranslateBase64",
+            new JSONObject().put("content", base64EncodedText).put("format", "txt")
+            );
+    return jsonBody.toString();
+  }
 
   private long createHttpRequest(String content) throws TranslationException, IOException {
     CredentialsProvider credsProvider = new BasicCredentialsProvider();

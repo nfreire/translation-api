@@ -33,9 +33,10 @@ public class ETranslationCallbackController {
   @PostMapping(value = ETranslationTranslationService.eTranslationCallbackRelativeUrl)
   public void eTranslationCallbackPost(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
-      @RequestParam(value = "translated-text", required = true) String translatedTextSnippet,
+      @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
       @RequestParam(value = "request-id", required = true) String requestId,
-      @RequestParam(value = "external-reference", required = true) String externalReference) {
+      @RequestParam(value = "external-reference", required = true) String externalReference,
+      @RequestBody(required = false) String body) {
 
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug(
@@ -44,8 +45,14 @@ public class ETranslationCallbackController {
           LoggingUtils.sanitizeUserInput(requestId),
           LoggingUtils.sanitizeUserInput(externalReference));
     }
-    if (externalReference != null && translatedTextSnippet != null) {
-      redisTemplate.convertAndSend(externalReference, translatedTextSnippet);
+    /*
+     * in case we send a document for the translation, we get the output in the body, or otherwise,
+     * if we send a text snippet in the text-to-translate field, we ge the output in the translated-text parameter 
+     * (although also extracted from the body)
+     */
+    String translations = translatedTextSnippet!=null ? translatedTextSnippet : body;
+    if(externalReference!=null && translations!=null) {
+      redisTemplate.convertAndSend(externalReference, translations);
     }
   }
 
@@ -56,8 +63,7 @@ public class ETranslationCallbackController {
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
       @RequestParam(value = "request-id", required = false) String requestId,
       @RequestParam(value = "external-reference", required = false) String externalReference,
-      @RequestParam(value = "timeout", required = false) Integer timeout,
-      @RequestBody(required = false) String body) throws InterruptedException {
+      @RequestParam(value = "timeout", required = false) Integer timeout) throws InterruptedException {
     
     if (timeout != null && timeout > 0) {
       // for simulation purposes, wait for $timeout seconds
@@ -77,7 +83,6 @@ public class ETranslationCallbackController {
     }
 
     return ResponseEntity.status(HttpStatus.ACCEPTED).build();
-
 
   }
 
