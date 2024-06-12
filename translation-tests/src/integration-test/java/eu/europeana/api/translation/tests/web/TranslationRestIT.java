@@ -206,12 +206,12 @@ public class TranslationRestIT extends BaseTranslationTest {
     String eTranslRef="et:deenre7d+w";
     StringBuilder translatedText=new StringBuilder();
     translatedText.append("That is my dog.");
-    translatedText.append(ETranslationTranslationService.markupDelimiter);
+    translatedText.append(ETranslationTranslationService.MARKUP_DELIMITER);
     translatedText.append("That is my tree.");
     
     mockMvc
     .perform(
-        post(ETranslationTranslationService.eTranslationCallbackRelativeUrl).characterEncoding(StandardCharsets.UTF_8)
+        post(ETranslationTranslationService.PATH_CALLBACK).characterEncoding(StandardCharsets.UTF_8)
         .param("external-reference", eTranslRef)
         .param("request-id", "1")
         .param("translated-text", translatedText.toString()))
@@ -237,7 +237,7 @@ public class TranslationRestIT extends BaseTranslationTest {
     
     mockMvc
     .perform(
-        post(ETranslationTranslationService.eTranslationCallbackRelativeUrl).characterEncoding(StandardCharsets.UTF_8)
+        post(ETranslationTranslationService.PATH_CALLBACK).characterEncoding(StandardCharsets.UTF_8)
         .param("external-reference", eTranslRef)
         .param("request-id", "1")
         .content(translatedText))

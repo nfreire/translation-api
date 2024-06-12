@@ -30,7 +30,7 @@ public class ETranslationCallbackController {
   }
 
   @Tag(description = "ETranslation callback endpoint", name = "eTranslationCallback")
-  @PostMapping(value = ETranslationTranslationService.eTranslationCallbackRelativeUrl)
+  @PostMapping(value = ETranslationTranslationService.PATH_CALLBACK)
   public void eTranslationCallbackPost(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
@@ -56,8 +56,12 @@ public class ETranslationCallbackController {
     }
   }
 
+  /**
+   * This method is deprecated, it is used for manual simulations only, as the eTranslation send post callbacks
+   */
   @Tag(description = "ETranslation callback endpoint", name = "eTranslationCallback")
-  @GetMapping(value = ETranslationTranslationService.eTranslationCallbackRelativeUrl)
+  @GetMapping(value = ETranslationTranslationService.PATH_CALLBACK)
+  @Deprecated
   public ResponseEntity<String> eTranslationCallbackGet(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
@@ -87,7 +91,7 @@ public class ETranslationCallbackController {
   }
 
   @Tag(description = "ETranslation error callback endpoint", name = "eTranslationErrorCallback")
-  @PostMapping(value = ETranslationTranslationService.eTranslationErrorCallbackRelativeUrl)
+  @PostMapping(value = ETranslationTranslationService.PATH_ERROR_CALLBACK)
   public void eTranslationErrorCallbackPost(
       @RequestParam(value = "error-code", required = false) String errorCode,
       @RequestParam(value = "error-message", required = false) String errorMessage,
@@ -106,13 +110,13 @@ public class ETranslationCallbackController {
     if (externalReference != null) {
       redisTemplate.convertAndSend(externalReference,
           String.format("%s: error-code=%s, error-message=%s",
-              ETranslationTranslationService.eTranslationErrorCallbackIndicator, errorCode,
+              ETranslationTranslationService.ERROR_CALLBACK_MARKUP, errorCode,
               errorMessage));
     }
   }
 
   @Tag(description = "ETranslation error callback endpoint", name = "eTranslationErrorCallback")
-  @GetMapping(value = ETranslationTranslationService.eTranslationErrorCallbackRelativeUrl)
+  @GetMapping(value = ETranslationTranslationService.PATH_ERROR_CALLBACK)
   public void eTranslationErrorCallbackGet(
       @RequestParam(value = "error-code", required = false) String errorCode,
       @RequestParam(value = "error-message", required = false) String errorMessage,
@@ -131,7 +135,7 @@ public class ETranslationCallbackController {
     if (externalReference != null) {
       redisTemplate.convertAndSend(externalReference,
           String.format("%s: error-code=%s, error-message=%s",
-              ETranslationTranslationService.eTranslationErrorCallbackIndicator, errorCode,
+              ETranslationTranslationService.ERROR_CALLBACK_MARKUP, errorCode,
               errorMessage));
     }
   }
