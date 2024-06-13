@@ -28,15 +28,15 @@ public class RedisMessageListener implements MessageListener {
           LOGGER.debug("New message received from RedisMessageListener: {}", message);
         }
         String messageBody=new String(message.getBody(), StandardCharsets.UTF_8);
-        if(messageBody.contains(ETranslationTranslationService.eTranslationErrorCallbackIndicator)) {
-          //if we enter here, means the eTranslation error callback is called
+        
+        if(messageBody.contains(ETranslationTranslationService.ERROR_CALLBACK_MARKUP)) {
+          //if we enter here, eTranslation error callback response
           this.message=messageBody;
-        }
-        else {
-          if(messageAsDocument) {
-            this.message = messageBody;
-          }
-          else {
+        } else if(messageAsDocument) {
+          //document translation response 
+          this.message = messageBody;
+        } else {
+          //text snippet translation response
             /* 
              * the received message is treated as a json object and we need some adjustments for the escaped characters
              * (this only applies if we get the translated text from the translated-text field in the eTransl callback,
@@ -46,7 +46,6 @@ public class RedisMessageListener implements MessageListener {
             String messageRemDuplQuotes = messageBody.replaceAll("^\"|\"$", "");
             //replace a double backslash with a single backslash
             this.message = messageRemDuplQuotes.replace("\\n", "\n");
-          }
         }
         
         //notify all threads waiting on this object
