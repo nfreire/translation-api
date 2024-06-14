@@ -217,7 +217,7 @@ public class TranslationWebService extends BaseWebService {
   }
 
   private boolean exceedesSnippetLimit(StringBuilder translJointString, String textToAppend) {
-    return translJointString.length() + textToAppend.length() <= ETranslationTranslationService.ETRANSLATION_SNIPPET_LIMIT;
+    return translJointString.length() + textToAppend.length() >= ETranslationTranslationService.ETRANSLATION_SNIPPET_LIMIT;
   }
 
   private boolean shouldTruncateText(TranslationRequest translationRequest) {
