@@ -61,16 +61,16 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   public ETranslationTranslationService(String etranslationServiceBaseUrl, String domain,
       String translationApiBaseUrl, int maxWaitMillisec, String username, String password,
       RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
-    if (!FAKE_BASE_URL_FOR_TESTING.equals(santizeETranslationRequestBody(etranslationServiceBaseUrl))) {
-      validateETranslConfigParams(santizeETranslationRequestBody(etranslationServiceBaseUrl), santizeETranslationRequestBody(domain), santizeETranslationRequestBody(translationApiBaseUrl),
-          maxWaitMillisec, santizeETranslationRequestBody(username), santizeETranslationRequestBody(password));
+    if (!FAKE_BASE_URL_FOR_TESTING.equals(etranslationServiceBaseUrl)) {
+      validateETranslConfigParams(etranslationServiceBaseUrl, domain, translationApiBaseUrl,
+          maxWaitMillisec, username, password);
     }
-    this.baseUrl = santizeETranslationRequestBody(etranslationServiceBaseUrl);
-    this.translationApiBaseUrl = santizeETranslationRequestBody(translationApiBaseUrl);
-    this.domain = santizeETranslationRequestBody(domain);
+    this.baseUrl = etranslationServiceBaseUrl;
+    this.translationApiBaseUrl = translationApiBaseUrl;
+    this.domain = domain;
     this.maxWaitMillisec = maxWaitMillisec;
-    this.credentialUsername = santizeETranslationRequestBody(username);
-    this.credentialPwd = santizeETranslationRequestBody(password);
+    this.credentialUsername = username;
+    this.credentialPwd = password;
     this.redisMessageListenerContainer = redisMessageListenerContainer;
   }
 
@@ -86,22 +86,22 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       String translationApiBaseUrl, int maxWaitMillisec, String username, String password)
       throws TranslationException {
     List<String> missingParams = new ArrayList<>(6);
-    if (StringUtils.isBlank(santizeETranslationRequestBody(etranslationServiceBaseUrl))) {
+    if (StringUtils.isBlank(etranslationServiceBaseUrl)) {
       missingParams.add("baseUrl");
     }
-    if (StringUtils.isBlank(santizeETranslationRequestBody(domain))) {
+    if (StringUtils.isBlank(domain)) {
       missingParams.add("domain");
     }
-    if (StringUtils.isBlank(santizeETranslationRequestBody(translationApiBaseUrl))) {
+    if (StringUtils.isBlank(translationApiBaseUrl)) {
       missingParams.add("translationApiBaseUrl");
     }
     if (maxWaitMillisec <= 0) {
       missingParams.add("maxWaitMillisec (must be >0)");
     }
-    if (StringUtils.isBlank(santizeETranslationRequestBody(username))) {
+    if (StringUtils.isBlank(username)) {
       missingParams.add("username");
     }
-    if (StringUtils.isBlank(santizeETranslationRequestBody(password))) {
+    if (StringUtils.isBlank(password)) {
       missingParams.add("password");
     }
 
@@ -114,7 +114,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   @Override
   public void translate(List<TranslationObj> translationObjs) throws TranslationException {
     String sourceLang = translationObjs.get(0).getSourceLang();
-    if (santizeETranslationRequestBody(sourceLang) == null) {
+    if (sourceLang == null) {
       throw new TranslationException(
           "The source language cannot be null for the eTranslation service.");
     }
@@ -129,27 +129,27 @@ public class ETranslationTranslationService extends AbstractTranslationService {
      * using the external reference from the eTransl callback.
      */
     // create external reference for eTransl service
-    String eTranslExtRef = TranslationUtils.generateRedisKey(santizeETranslationRequestBody(eTranslJointStr),
+    String eTranslExtRef = TranslationUtils.generateRedisKey(eTranslJointStr,
         translationObjs.get(0).getSourceLang(), translationObjs.get(0).getTargetLang(), "et:");
 
     try {
       //create request body
       String body =
-          createTranslationRequestBody(santizeETranslationRequestBody(eTranslJointStr), translationObjs.get(0).getSourceLang(),
-              translationObjs.get(0).getTargetLang(), santizeETranslationRequestBody(eTranslExtRef));
+          createTranslationRequestBody(eTranslJointStr, translationObjs.get(0).getSourceLang(),
+              translationObjs.get(0).getTargetLang(), eTranslExtRef);
 
       // register redis channel
-      redisMessageListenerAdapter = registerRedisChannel(santizeETranslationRequestBody(eTranslExtRef), santizeETranslationRequestBody(eTranslJointStr).length());
+      redisMessageListenerAdapter = registerRedisChannel(eTranslExtRef, eTranslJointStr.length());
 
       //send the eTransl request, if not fake url
       if (!FAKE_BASE_URL_FOR_TESTING.equals(baseUrl)) {
-        sendTranslationRequest(santizeETranslationRequestBody(body));
+        sendTranslationRequest(body);
       }
       // create a redis message listener obj, and wait on that obj until it get notified from the
       // redis publisher
       // createRedisMessageListenerAndWaitForResults(translationObjs, eTranslExtRef,
       // eTranslJointStr.length());
-      readTranslationResponseFromRedis(redisMessageListenerAdapter, translationObjs, santizeETranslationRequestBody(eTranslExtRef), santizeETranslationRequestBody(eTranslJointStr).length());
+      readTranslationResponseFromRedis(redisMessageListenerAdapter, translationObjs, eTranslExtRef, eTranslJointStr.length());
       
     } catch (JSONException | UnsupportedEncodingException e) {
       throw new TranslationException(
@@ -180,7 +180,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     String response =
         readMessageFromChannel(redisMessageListenerAdapter);
 
-    if (santizeETranslationRequestBody(response) == null) {
+    if (response == null) {
       throw new TranslationException(
           "No response received from external eTranslation Service within expected interval of seconds: "
               + toSeconds(maxWaitMillisec),
@@ -189,16 +189,16 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
     // message received, populate the translations
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Received message from redis message listener is: {}", santizeETranslationRequestBody(response));
+      LOGGER.debug("Received message from redis message listener is: {}", response);
     }
 
-    if (santizeETranslationRequestBody(response).contains(ETranslationTranslationService.ERROR_CALLBACK_MARKUP)) {
+    if (response.contains(ETranslationTranslationService.ERROR_CALLBACK_MARKUP)) {
       // eTtransl error callback received
-      throw new TranslationException(santizeETranslationRequestBody(response), HttpStatus.SC_UNPROCESSABLE_ENTITY);
+      throw new TranslationException(response, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     }
 
     // fill translations into the provided translation list
-    fillTranslationsFromRemoteResponse(translationObjs, santizeETranslationRequestBody(response), isSnippetLimitExceeded(textSize));
+    fillTranslationsFromRemoteResponse(translationObjs, response, isSnippetLimitExceeded(textSize));
   }
 
   private int toSeconds(int maxWaitMillisec) {
@@ -262,16 +262,16 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     MessageListenerAdapter redisMessageListenerAdapter =
         new MessageListenerAdapter(new RedisMessageListener(requestAsDocument));
     redisMessageListenerContainer.addMessageListener(redisMessageListenerAdapter,
-        ChannelTopic.of(santizeETranslationRequestBody(eTranslExtRef)));
+        ChannelTopic.of(eTranslExtRef));
     return redisMessageListenerAdapter;
   }
 
   private void fillTranslationsFromRemoteResponse(List<TranslationObj> translationObjs,
       String response, boolean responseAsDocument) throws TranslationException {
     if (responseAsDocument) {
-      fillTranslationsFromDocumentTranslationResponse(translationObjs, santizeETranslationRequestBody(response));
+      fillTranslationsFromDocumentTranslationResponse(translationObjs, response);
     } else {
-      fillTranslationsFromTextSnippetTranslationResponse(translationObjs, santizeETranslationRequestBody(response));
+      fillTranslationsFromTextSnippetTranslationResponse(translationObjs, response);
     }
   }
 
@@ -288,8 +288,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private void fillTranslationsFromDocumentTranslationResponse(List<TranslationObj> translationObjs,
       String response) throws TranslationException {
     // first base64 decode
-    String respBase64Decoded = new String(Base64.decodeBase64(santizeETranslationRequestBody(response)), StandardCharsets.UTF_8);
-    fillTranslationsFromTextSnippetTranslationResponse(translationObjs, santizeETranslationRequestBody(respBase64Decoded));
+    String respBase64Decoded = new String(Base64.decodeBase64(response), StandardCharsets.UTF_8);
+    fillTranslationsFromTextSnippetTranslationResponse(translationObjs, respBase64Decoded);
   }
 
   /**
@@ -304,7 +304,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
   private void fillTranslationsFromTextSnippetTranslationResponse(
       List<TranslationObj> translationObjs, String response) throws TranslationException {
-    String[] translations = santizeETranslationRequestBody(response).split(MARKUP_DELIMITER_WITHOUT_NEWLINE);
+    String[] translations = response.split(MARKUP_DELIMITER_WITHOUT_NEWLINE);
     if (translations.length != translationObjs.size()) {
       throw new TranslationException(
           "The eTranslation response and the input texts have different size.");
@@ -319,29 +319,14 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
     List<String> texts = translationObjs.stream().map(to -> to.getText()).toList();
     return String.join(MARKUP_DELIMITER, texts);
-
-    // int stringBuilderSize = 0;
-    // for (TranslationObj translationObj : translationObjs) {
-    // stringBuilderSize += translationObj.getText().length();
-    // }
-    // stringBuilderSize += ((translationObjs.size() -1) * MARKUP_DELIMITER.length());
-    //
-    // StringBuilder translJointString = new StringBuilder(stringBuilderSize);
-    // for (int i = 0; i < translationObjs.size(); i++) {
-    // translJointString.append(translationObjs.get(i).getText());
-    // if (i < translationObjs.size() - 1) {
-    // translJointString.append(MARKUP_DELIMITER);
-    // }
-    // }
-    // return translJointString.toString();
   }
 
   private String createTranslationRequestBody(String text, String sourceLang, String targetLang,
       String externalReference) throws JSONException {
-    if (isSnippetLimitExceeded(santizeETranslationRequestBody(text).length())) {
-      return createTranslationBodyWithDocument(santizeETranslationRequestBody(text), santizeETranslationRequestBody(sourceLang), santizeETranslationRequestBody(targetLang), santizeETranslationRequestBody(externalReference));
+    if (isSnippetLimitExceeded(text.length())) {
+      return createTranslationBodyWithDocument(text, sourceLang, targetLang, externalReference);
     } else {
-      return createTranslationBodyWithTextSnippet(santizeETranslationRequestBody(text), santizeETranslationRequestBody(sourceLang), santizeETranslationRequestBody(targetLang), santizeETranslationRequestBody(externalReference));
+      return createTranslationBodyWithTextSnippet(text, sourceLang, targetLang, externalReference);
     }
   }
 
@@ -360,19 +345,14 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     JSONObject jsonBody = new JSONObject().put("priority", 0)
         .put("requesterCallback", getTranslatioCallbackUrl())
         .put("errorCallback", getTranslationErrorCallbackUrl())
-        .put("externalReference", santizeETranslationRequestBody(externalReference))
+        .put("externalReference", externalReference)
         .put("callerInformation",
             new JSONObject().put("application", credentialUsername).put("username",
                 credentialUsername))
-        .put("sourceLanguage", santizeETranslationRequestBody(sourceLang).toUpperCase(Locale.ENGLISH))
-        .put("targetLanguages", new JSONArray().put(0, santizeETranslationRequestBody(targetLang).toUpperCase(Locale.ENGLISH)))
+        .put("sourceLanguage", sourceLang.toUpperCase(Locale.ENGLISH))
+        .put("targetLanguages", new JSONArray().put(0, targetLang.toUpperCase(Locale.ENGLISH)))
         .put("domain", domain)
-        // .put("destinations",
-        // new JSONObject().put("httpDestinations", new JSONArray().put(0,
-        // "http://<prod_server_ip>/enrichment-web")))
-        // .put("documentToTranslateBase64", new JSONObject().put("format",
-        // fileFormat).put("content", base64content));
-        .put("textToTranslate", santizeETranslationRequestBody(text));
+        .put("textToTranslate", text);
 
     return jsonBody.toString();
   }
@@ -391,23 +371,23 @@ public class ETranslationTranslationService extends AbstractTranslationService {
    */
   private String createTranslationBodyWithDocument(String text, String sourceLang,
       String targetLang, String externalReference) throws JSONException {
-    String base64EncodedText = Base64.encodeBase64String(santizeETranslationRequestBody(text).getBytes(StandardCharsets.UTF_8));
+    String base64EncodedText = Base64.encodeBase64String(text.getBytes(StandardCharsets.UTF_8));
     JSONObject jsonBody = new JSONObject().put("priority", 0)
         // .put("requesterCallback", getTranslatioCallbackUrl())
         // .put("errorCallback", getTranslationErrorCallbackUrl())
-        .put("externalReference", santizeETranslationRequestBody(externalReference))
+        .put("externalReference", externalReference)
         .put("callerInformation",
             new JSONObject().put("application", credentialUsername).put("username",
                 credentialUsername))
-        .put("sourceLanguage", santizeETranslationRequestBody(sourceLang).toUpperCase(Locale.ENGLISH))
-        .put("targetLanguages", new JSONArray().put(0, santizeETranslationRequestBody(targetLang).toUpperCase(Locale.ENGLISH)))
+        .put("sourceLanguage", sourceLang.toUpperCase(Locale.ENGLISH))
+        .put("targetLanguages", new JSONArray().put(0, targetLang.toUpperCase(Locale.ENGLISH)))
         .put("domain", domain)
         .put("destinations",
             new JSONObject().put("httpDestinations",
                 new JSONArray().put(0, getTranslatioCallbackUrl())))
         // .put("textToTranslate", text);
         .put("documentToTranslateBase64",
-            new JSONObject().put("content", santizeETranslationRequestBody(base64EncodedText)).put("format", "txt"));
+            new JSONObject().put("content", base64EncodedText).put("format", "txt"));
     return jsonBody.toString();
   }
 
@@ -418,7 +398,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     CloseableHttpClient httpClient =
         HttpClientBuilder.create().setDefaultCredentialsProvider(credsProvider).build();
     HttpPost request = new HttpPost(baseUrl);
-    StringEntity body = new StringEntity(santizeETranslationRequestBody(content), "UTF-8");
+    StringEntity body = new StringEntity(content, "UTF-8");
     request.addHeader("content-type", "application/json");
     request.setEntity(body);
 
@@ -429,30 +409,30 @@ public class ETranslationTranslationService extends AbstractTranslationService {
     if (HttpStatus.SC_OK != respStatusLine.getStatusCode()) {
       throw new TranslationException(
           "The translation request could not be successfully registered. ETranslation response: "
-              + respStatusLine.getStatusCode() + ", response body: " + santizeETranslationRequestBody(respBody));
+              + respStatusLine.getStatusCode() + ", response body: " + respBody);
     }
 
     long requestNumber;
     try {
-      requestNumber = Long.parseLong(santizeETranslationRequestBody(respBody));
+      requestNumber = Long.parseLong(respBody);
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("eTranslation request sent with the request-id: {} and body: {}.",
-            requestNumber, santizeETranslationRequestBody(content));
+            requestNumber, sanitizeRequestBodyForLogging(content));
       }
       if (requestNumber < 0) {
-        throw wrapETranslationErrorResponse(santizeETranslationRequestBody(respBody));
+        throw wrapETranslationErrorResponse(respBody);
       }
     } catch (NumberFormatException e) {
-      throw wrapETranslationErrorResponse(santizeETranslationRequestBody(respBody));
+      throw wrapETranslationErrorResponse(respBody);
     }
 
     return requestNumber;
   }
 
-  private String santizeETranslationRequestBody(String content) {
+  private String sanitizeRequestBodyForLogging(String content) {
     if(content != null) {
-      content.replaceAll(credentialPwd, "*****");
-      content.replaceAll(credentialUsername, "*****");
+      content.replace(getCredentialUsername(), "*****");
+      content.replace(getCredentialPwd(), "*****");
     }
     return content;
   }
@@ -460,7 +440,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   TranslationException wrapETranslationErrorResponse(String respBody) {
     return new TranslationException(
         "The translation request could not be successfully registered. ETranslation error response: "
-            + santizeETranslationRequestBody(respBody));
+            + respBody);
   }
 
   @Override
@@ -470,7 +450,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
   @Override
   public void setServiceId(String serviceId) {
-    this.serviceId = santizeETranslationRequestBody(serviceId);
+    this.serviceId = serviceId;
   }
 
   @Override
@@ -484,6 +464,14 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   @Override
   public String getExternalServiceEndPoint() {
     return null;
+  }
+
+  private String getCredentialUsername() {
+    return credentialUsername;
+  }
+
+  private String getCredentialPwd() {
+    return credentialPwd;
   }
 
 }
