@@ -17,11 +17,43 @@
 	</properties>
 
 	<dependencies>
+		<!-- add here all modules for which the code coverage needs to be computed -->
 		<dependency>
 			<groupId>eu.europeana.api</groupId>
 			<artifactId>translation-web</artifactId>
 			<version>0.1.3-SNAPSHOT</version>
 		</dependency>
+	
+		<dependency>
+			<groupId>eu.europeana.api</groupId>
+			<artifactId>translation-service-common</artifactId>
+			<version>0.1.3-SNAPSHOT</version>
+		</dependency>
+			
+		<dependency>
+			<groupId>eu.europeana.api</groupId>
+			<artifactId>translation-service-google</artifactId>
+			<version>0.1.3-SNAPSHOT</version>
+		</dependency>
+			
+		<dependency>
+			<groupId>eu.europeana.api</groupId>
+			<artifactId>translation-service-pangeanic</artifactId>
+			<version>0.1.3-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>eu.europeana.api</groupId>
+			<artifactId>translation-service-tika</artifactId>
+			<version>0.1.3-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>eu.europeana.api</groupId>
+			<artifactId>translation-service-etranslation</artifactId>
+			<version>0.1.3-SNAPSHOT</version>
+		</dependency>
+			
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
