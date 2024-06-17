@@ -446,8 +446,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
   private String sanitizeRequestBodyForLogging(String content) {
     if(content != null) {
-      content.replace(getCredentialUsername(), "*****");
-      content.replace(getCredentialPwd(), "*****");
+      return content.replace(getCredentialUsername(), "*****")
+          .replace(getCredentialPwd(), "*****");
+      
     }
     return content;
   }
