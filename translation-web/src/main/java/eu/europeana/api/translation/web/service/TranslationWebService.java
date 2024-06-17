@@ -222,7 +222,7 @@ public class TranslationWebService extends BaseWebService {
   }
 
   private boolean shouldTruncateText(TranslationRequest translationRequest) {
-    return translationConfig.getEtranslationTruncate()
+    return translationConfig.isEtranslationTruncate()
         && ETranslationTranslationService.DEFAULT_SERVICE_ID.equals(translationRequest.getService());
   }
 

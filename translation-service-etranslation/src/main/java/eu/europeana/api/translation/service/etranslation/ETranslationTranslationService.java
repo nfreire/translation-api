@@ -48,7 +48,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   public static final String PATH_ERROR_CALLBACK = "/etranslation/error-callback";
   public static final int ETRANSLATION_SNIPPET_LIMIT = 4990;
   public static final int ETRANSLATION_SNIPPET_LIMIT_TESTS = 200;
-
+  private static final int SECOND_MILIS = 1000;
+  
+  
   private String serviceId;
   private final String baseUrl;
   private final String domain;
@@ -58,6 +60,17 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   private final int maxWaitMillisec;
   private final RedisMessageListenerContainer redisMessageListenerContainer;
 
+  /**
+   * Contructor for etranslation service using dependency injection
+   * @param etranslationServiceBaseUrl base uRL of eTranslation service
+   * @param domain eTranslation domain
+   * @param translationApiBaseUrl the base URL of the translation API deployment
+   * @param maxWaitMillisec timeout for eTranslation callback 
+   * @param username eTranslation credential
+   * @param password eTranslation credential
+   * @param redisMessageListenerContainer container for PUB/SUB redis message listeners
+   * @throws TranslationException thrown in case that the translation cannot be performed/retrieved 
+   */
   public ETranslationTranslationService(String etranslationServiceBaseUrl, String domain,
       String translationApiBaseUrl, int maxWaitMillisec, String username, String password,
       RedisMessageListenerContainer redisMessageListenerContainer) throws TranslationException {
@@ -145,11 +158,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       if (!FAKE_BASE_URL_FOR_TESTING.equals(baseUrl)) {
         sendTranslationRequest(body);
       }
-      // create a redis message listener obj, and wait on that obj until it get notified from the
-      // redis publisher
-      // createRedisMessageListenerAndWaitForResults(translationObjs, eTranslExtRef,
-      // eTranslJointStr.length());
-      readTranslationResponseFromRedis(redisMessageListenerAdapter, translationObjs, eTranslExtRef, eTranslJointStr.length());
+      // read translation response
+      readTranslationResponseFromRedis(redisMessageListenerAdapter, translationObjs, eTranslJointStr.length());
       
     } catch (JSONException | UnsupportedEncodingException e) {
       throw new TranslationException(
@@ -170,7 +180,7 @@ public class ETranslationTranslationService extends AbstractTranslationService {
 
  
   private void readTranslationResponseFromRedis(MessageListenerAdapter redisMessageListenerAdapter, List<TranslationObj> translationObjs,
-      String eTranslExtRef, int textSize) throws TranslationException {
+      int textSize) throws TranslationException {
     
     if(redisMessageListenerAdapter == null) {
       //if channel not registered, cannot read results
@@ -202,22 +212,27 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   }
 
   private int toSeconds(int maxWaitMillisec) {
-    return maxWaitMillisec / 1000;
+    return maxWaitMillisec / SECOND_MILIS;
   }
 
   private boolean isSnippetLimitExceeded(int textSize) {
     // use smaller limit for the tests (e.g. 200)
     if (FAKE_BASE_URL_FOR_TESTING.equals(baseUrl)) {
-      return textSize > ETRANSLATION_SNIPPET_LIMIT_TESTS ? true : false;
+      return (textSize > ETRANSLATION_SNIPPET_LIMIT_TESTS);
     } else {
-      return textSize > ETRANSLATION_SNIPPET_LIMIT ? true : false;
+      return (textSize > ETRANSLATION_SNIPPET_LIMIT);
     }
   }
 
-  private String readMessageFromChannel(MessageListenerAdapter redisMessageListenerAdapter) throws TranslationException {
+  private String readMessageFromChannel(MessageListenerAdapter redisMessageListenerAdapter){
     
     RedisMessageListener redisMessageListener =
         (RedisMessageListener) redisMessageListenerAdapter.getDelegate();
+   
+    if(redisMessageListener == null) {
+      throw new IllegalArgumentException("ETranslation callback handling was not propetly initilized, the message listener must not be null!");
+    }
+    
     
     synchronized (redisMessageListener) {
       /*
@@ -459,7 +474,9 @@ public class ETranslationTranslationService extends AbstractTranslationService {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    //nothing to do here
+  }
 
   @Override
   public String getExternalServiceEndPoint() {

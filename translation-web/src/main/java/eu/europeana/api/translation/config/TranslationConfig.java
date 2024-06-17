@@ -185,7 +185,7 @@ public class TranslationConfig{
     return etranslationBaseUrl;
   }
 
-  public boolean getEtranslationTruncate() {
+  public boolean isEtranslationTruncate() {
     return etranslationTruncate;
   }
   

@@ -31,6 +31,9 @@ public class ETranslationCallbackController {
 
   @Tag(description = "ETranslation callback endpoint", name = "eTranslationCallback")
   @PostMapping(value = ETranslationTranslationService.PATH_CALLBACK)
+  /**
+   * callback endpoint for eTranslation - post request
+   */
   public void eTranslationCallbackPost(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
@@ -50,7 +53,7 @@ public class ETranslationCallbackController {
      * if we send a text snippet in the text-to-translate field, we ge the output in the translated-text parameter 
      * (although also extracted from the body)
      */
-    String translations = translatedTextSnippet!=null ? translatedTextSnippet : body;
+    String translations = (translatedTextSnippet == null) ? body : translatedTextSnippet ;
     if(externalReference!=null && translations!=null) {
       redisTemplate.convertAndSend(externalReference, translations);
     }
@@ -58,10 +61,11 @@ public class ETranslationCallbackController {
 
   /**
    * This method is deprecated, it is used for manual simulations only, as the eTranslation send post callbacks
+   * @deprecated for simulation purposes only
    */
   @Tag(description = "ETranslation callback endpoint", name = "eTranslationCallback")
   @GetMapping(value = ETranslationTranslationService.PATH_CALLBACK)
-  @Deprecated
+  @Deprecated(since = "begiging ...")
   public ResponseEntity<String> eTranslationCallbackGet(
       @RequestParam(value = "target-language", required = false) String targetLanguage,
       @RequestParam(value = "translated-text", required = false) String translatedTextSnippet,
@@ -71,7 +75,8 @@ public class ETranslationCallbackController {
     
     if (timeout != null && timeout > 0) {
       // for simulation purposes, wait for $timeout seconds
-      Thread.sleep(timeout * 1000);
+      final long SECONDS_MILIS = 1000;
+      Thread.sleep(timeout * SECONDS_MILIS);
       return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 
@@ -92,6 +97,9 @@ public class ETranslationCallbackController {
 
   @Tag(description = "ETranslation error callback endpoint", name = "eTranslationErrorCallback")
   @PostMapping(value = ETranslationTranslationService.PATH_ERROR_CALLBACK)
+  /**
+   * callback endpoint for eTranslation errors - post request
+   */
   public void eTranslationErrorCallbackPost(
       @RequestParam(value = "error-code", required = false) String errorCode,
       @RequestParam(value = "error-message", required = false) String errorMessage,
@@ -99,6 +107,11 @@ public class ETranslationCallbackController {
       @RequestParam(value = "request-id", required = false) String requestId,
       @RequestParam(value = "external-reference", required = false) String externalReference,
       @RequestBody(required = false) String body) {
+    handleErroCallback(errorCode, errorMessage, requestId, externalReference);
+  }
+
+  private void handleErroCallback(String errorCode, String errorMessage, String requestId,
+      String externalReference) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug(
           "eTranslation error callback has been received with the following parameters: error-code: {},"
@@ -117,6 +130,9 @@ public class ETranslationCallbackController {
 
   @Tag(description = "ETranslation error callback endpoint", name = "eTranslationErrorCallback")
   @GetMapping(value = ETranslationTranslationService.PATH_ERROR_CALLBACK)
+  /**
+   * callback endpoint for eTranslation - get request
+   */
   public void eTranslationErrorCallbackGet(
       @RequestParam(value = "error-code", required = false) String errorCode,
       @RequestParam(value = "error-message", required = false) String errorMessage,
@@ -124,20 +140,7 @@ public class ETranslationCallbackController {
       @RequestParam(value = "request-id", required = false) String requestId,
       @RequestParam(value = "external-reference", required = false) String externalReference,
       @RequestBody(required = false) String body) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug(
-          "eTranslation error callback has been received with the following parameters: error-code: {},"
-              + "error-message: {}, request-id: {}, external-reference: {}",
-          LoggingUtils.sanitizeUserInput(errorCode), LoggingUtils.sanitizeUserInput(errorMessage),
-          LoggingUtils.sanitizeUserInput(requestId),
-          LoggingUtils.sanitizeUserInput(externalReference));
-    }
-    if (externalReference != null) {
-      redisTemplate.convertAndSend(externalReference,
-          String.format("%s: error-code=%s, error-message=%s",
-              ETranslationTranslationService.ERROR_CALLBACK_MARKUP, errorCode,
-              errorMessage));
-    }
+    handleErroCallback(errorCode, errorMessage, requestId, externalReference);
   }
 
 

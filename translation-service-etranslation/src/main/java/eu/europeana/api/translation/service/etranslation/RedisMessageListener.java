@@ -14,8 +14,12 @@ public class RedisMessageListener implements MessageListener {
     private static final Logger LOGGER = LogManager.getLogger(RedisMessageListener.class);
     private String message;
     //if true, the message received will be a document (e.g. from the eTranslation), otherwise a text-snippet
-    private boolean messageAsDocument; 
+    private final boolean messageAsDocument; 
     
+    /**
+     * Constructur, indicating if the expected message is for document translation or not
+     * @param messageAsDocument indicate if the expected response is from document translation
+     */
     public RedisMessageListener(boolean messageAsDocument) {
       super();
       this.messageAsDocument = messageAsDocument;
