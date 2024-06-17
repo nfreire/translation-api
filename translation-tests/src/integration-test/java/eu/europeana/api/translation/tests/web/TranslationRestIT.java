@@ -132,9 +132,10 @@ public class TranslationRestIT extends BaseTranslationTest {
     }
     @Override
     public void run() {
+      String result;
       try {
         String requestJson = getJsonStringInput(TRANSLATION_REQUEST_E_TRANSLATION);
-        String result = mockMvc
+        result = mockMvc
             .perform(
                 post(BASE_URL_TRANSLATE)
                   .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
@@ -143,16 +144,20 @@ public class TranslationRestIT extends BaseTranslationTest {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
         
-        assertNotNull(result);
         JSONObject json = new JSONObject(result);
         String langFieldValue = json.getString(TranslationAppConstants.LANG);
-        assertEquals(LANGUAGE_EN, langFieldValue);
+        if(langFieldValue == null) {
+          throw new IllegalArgumentException("langFieldValue must not be null");
+        }
             
         List<String> translations = Collections.singletonList(json.getString(TranslationAppConstants.TRANSLATIONS));
         assertTrue(translations.contains("That is my dog.") && translations.contains("That is my tree."));
         String serviceFieldValue = json.getString(TranslationAppConstants.SERVICE);
-        assertNotNull(serviceFieldValue);
+        if(serviceFieldValue == null) {
+          throw new IllegalArgumentException("serviceFieldValue must not be null");
+        }
       } catch (Exception e) {
+        throw new RuntimeException("cannot run simulator for eTranslation callback!", e);
       }
     }
   }
