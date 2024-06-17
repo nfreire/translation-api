@@ -388,8 +388,8 @@ public class ETranslationTranslationService extends AbstractTranslationService {
       String targetLang, String externalReference) throws JSONException {
     String base64EncodedText = Base64.encodeBase64String(text.getBytes(StandardCharsets.UTF_8));
     JSONObject jsonBody = new JSONObject().put("priority", 0)
-        // .put("requesterCallback", getTranslatioCallbackUrl())
-        // .put("errorCallback", getTranslationErrorCallbackUrl())
+        .put("requesterCallback", getTranslatioCallbackUrl())
+        .put("errorCallback", getTranslationErrorCallbackUrl())
         .put("externalReference", externalReference)
         .put("callerInformation",
             new JSONObject().put("application", credentialUsername).put("username",
